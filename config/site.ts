@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Let Me Sleep",
-  url: "https://to-be-determined.com",
+  url: "https://let-me-sleep.vercel.app/",
   description: "Brain-Dump For Me, Blog For You",
   author: "Bishwajeet Sahoo",
   links: {
