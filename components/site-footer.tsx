@@ -38,9 +38,9 @@ export function SiteFooter() {
                     </a>
                 </div>
 
-                    <div className="mb-2 flex space-x-2 text-sm text-muted text-muted-foreground">
+                    <div className="mb-2 flex space-x-2 text-sm text-muted-foreground">
                         <span>Designed & Built by</span>
-                        <a href={siteConfig.links.github} target="_blank" rel="noreferrer" className="font-semibold">
+                        <a href={siteConfig.links.github} target="_blank" rel="noreferrer" className="font-bold">
                             {siteConfig.author}
                         </a>
                     </div>
