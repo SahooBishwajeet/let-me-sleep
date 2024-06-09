@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Let Me Sleep",
-  url: "https://dump.sahoobishwajeet.xyz/",
+  url: "https://letmesleep.sahoobishwajeet.xyz/",
   description: "Brain-Dump For Me, Blog For You",
   author: "Bishwajeet Sahoo",
   links: {
