@@ -9,6 +9,7 @@ export const siteConfig = {
     portfolio: "https://sahoobishwajeet.xyz",
     twitter: "https://x.com/2004sahoobishwa",
     discord: "https://discordapp.com/channels/@me/729644267856986114/",
+    repo: "https://github.com/SahooBishwajeet/let-me-sleep",
   },
 };
 
