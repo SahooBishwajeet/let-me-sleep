@@ -26,15 +26,15 @@ export function PostItem({
           <Link href={"/" + slug}>{title}</Link>
         </h2>
       </div>
-      
+
       <div className="flex gap-2">
         {tags?.map((tag) => (
           <Tag tag={tag} key={tag} />
         ))}
       </div>
-      
+
       <div className="max-w-none text-muted-foreground">{description}</div>
-      
+
       <div className="flex justify-between items-center">
         <dl>
           <dt className="sr-only">Published On</dt>

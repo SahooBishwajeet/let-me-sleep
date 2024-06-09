@@ -18,25 +18,27 @@ export default function Home() {
           </h1>
 
           <p className="max-w-[64rem] mx-auto mt-10 text-muted-foreground sm:text-xl text-balance">
-            Welcome to "Let Me Sleep", a Blog, or what I like to call "Brain
-            Dump", where the boundaries of thought and creativity are limitless.
-            Here, you'll find a tapestry of ideas, reflections, and musings that
-            span a myriad of topics. Whether you're looking for deep dives into
-            technology, explorations of artistic endeavors, or just random
-            thoughts that pop into my mind, this space serves as both a personal
-            brain dump and a shared journey with you.
+            Welcome to &quot;Let Me Sleep&quot;, a Blog, or what I like to call
+            &quot;Brain Dump&quot;, where the boundaries of thought and
+            creativity are limitless. Here, you&apos;ll find a tapestry of
+            ideas, reflections, and musings that span a myriad of topics.
+            Whether you&apos;re looking for deep dives into technology,
+            explorations of artistic endeavors, or just random thoughts that pop
+            into my mind, this space serves as both a personal brain dump and a
+            shared journey with you.
           </p>
 
           <p className="max-w-[64rem] mx-auto mt-6 text-muted-foreground sm:text-xl text-balance">
             A significant portion of this blog is dedicated to my tech-related
-            content and the various projects I'm working on. Here, I'll share
-            detailed accounts of my coding adventures, development processes,
-            and the challenges and triumphs I encounter along the way. You'll
-            get an inside look at how I tackle complex problems, implement
-            innovative solutions, and continuously learn and grow in the field
-            of technology. Whether you're a fellow coder, a tech enthusiast, or
-            simply curious about the inner workings of software development,
-            these posts will provide valuable insights and inspiration.
+            content and the various projects I&apos;m working on. Here,
+            I&apos;ll share detailed accounts of my coding adventures,
+            development processes, and the challenges and triumphs I encounter
+            along the way. You&apos;ll get an inside look at how I tackle
+            complex problems, implement innovative solutions, and continuously
+            learn and grow in the field of technology. Whether you&apos;re a
+            fellow coder, a tech enthusiast, or simply curious about the inner
+            workings of software development, these posts will provide valuable
+            insights and inspiration.
           </p>
 
           <div className="flex flex-col mt-16 gap-4 justify-center sm:flex-row">
@@ -71,17 +73,23 @@ export default function Home() {
         </h2>
 
         <ul className="flex flex-col">
-          {latestPosts.map((post) => (
-            post.published && (<li key={post.slug} className="first:border-t first:border-border">
-              <PostItem
-                slug={post.slug}
-                title={post.title}
-                description={post.description}
-                date={post.date}
-                tags={post.tags}
-              />
-            </li>)
-          ))}
+          {latestPosts.map(
+            (post) =>
+              post.published && (
+                <li
+                  key={post.slug}
+                  className="first:border-t first:border-border"
+                >
+                  <PostItem
+                    slug={post.slug}
+                    title={post.title}
+                    description={post.description}
+                    date={post.date}
+                    tags={post.tags}
+                  />
+                </li>
+              )
+          )}
         </ul>
       </section>
     </>
