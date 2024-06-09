@@ -36,11 +36,11 @@ export function QueryPagination({ totalPages, className }: QueryPaginationProps)
                     </PaginationItem>
                 ) : null}
                 
-                <PaginationItem className="hidden sm:inline-block">
+                { totalPages > 1 && <PaginationItem className="hidden sm:inline-block">
                     <PaginationLink isActive={currentPage === 1} href={createPageURL(1)}>
                         1
                     </PaginationLink>
-                </PaginationItem>
+                </PaginationItem>}
 
                 {showLeftDots && (
                     <PaginationItem className="hidden sm:inline-block">
@@ -48,7 +48,7 @@ export function QueryPagination({ totalPages, className }: QueryPaginationProps)
                     </PaginationItem>
                 )}
 
-                 {Array.from({ length: totalPages }, (_, index) => index + 1)
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
                     .filter(pageNumber => pageNumber > 1 && pageNumber < totalPages)
                     .filter(pageNumber => {
                         if (showLeftDots && !showRightDots) {
@@ -70,17 +70,18 @@ export function QueryPagination({ totalPages, className }: QueryPaginationProps)
                         </PaginationItem>
                     ))
                 }
+
                 {showRightDots && (
                     <PaginationItem className="hidden sm:inline-block">
                         <span>...</span>
                     </PaginationItem>
                 )}
 
-                <PaginationItem className="hidden sm:inline-block">
+                {totalPages > 1 && <PaginationItem className="hidden sm:inline-block">
                     <PaginationLink isActive={currentPage === totalPages} href={createPageURL(totalPages)}>
                         {totalPages}
                     </PaginationLink>
-                </PaginationItem>
+                </PaginationItem>}
 
                 {nextPage <=  totalPages ? (
                     <PaginationItem>
