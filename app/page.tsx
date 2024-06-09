@@ -41,7 +41,7 @@ export default function Home() {
 
           <div className="flex flex-col mt-16 gap-4 justify-center sm:flex-row">
             <Link
-              href="/blog"
+              href="/dump"
               className={cn(
                 buttonVariants({ variant: "secondary", size: "lg" }),
                 "w-full sm:w-fit"
@@ -72,7 +72,7 @@ export default function Home() {
 
         <ul className="flex flex-col">
           {latestPosts.map((post) => (
-            <li key={post.slug} className="first:border-t first:border-border">
+            post.published && (<li key={post.slug} className="first:border-t first:border-border">
               <PostItem
                 slug={post.slug}
                 title={post.title}
@@ -80,7 +80,7 @@ export default function Home() {
                 date={post.date}
                 tags={post.tags}
               />
-            </li>
+            </li>)
           ))}
         </ul>
       </section>

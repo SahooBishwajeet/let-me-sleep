@@ -23,7 +23,7 @@ export function PostItem({
     <article className="flex flex-col gap-2 border-border border-b py-3">
       <div>
         <h2 className="text-2xl font-bold">
-          <Link href={slug}>{title}</Link>
+          <Link href={"/" + slug}>{title}</Link>
         </h2>
       </div>
       
@@ -44,7 +44,7 @@ export function PostItem({
           </dd>
         </dl>
         <Link
-          href={slug}
+          href={"/" + slug}
           className={cn(buttonVariants({ variant: "link" }), "py-0")}
         >
           Read More ...
