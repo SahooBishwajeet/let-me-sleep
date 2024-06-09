@@ -18,26 +18,47 @@ export default function Home() {
           </h1>
 
           <p className="max-w-[64rem] mx-auto mt-10 text-muted-foreground sm:text-xl text-balance">
-            Welcome to "Let Me Sleep", a Blog, or what I like to call "Brain Dump", where the boundaries of thought and creativity are limitless. Here, you'll find a tapestry of ideas, reflections, and musings that span a myriad of topics. Whether you're looking for deep dives into technology, explorations of artistic endeavors, or just random thoughts that pop into my mind, this space serves as both a personal brain dump and a shared journey with you.
+            Welcome to "Let Me Sleep", a Blog, or what I like to call "Brain
+            Dump", where the boundaries of thought and creativity are limitless.
+            Here, you'll find a tapestry of ideas, reflections, and musings that
+            span a myriad of topics. Whether you're looking for deep dives into
+            technology, explorations of artistic endeavors, or just random
+            thoughts that pop into my mind, this space serves as both a personal
+            brain dump and a shared journey with you.
           </p>
 
           <p className="max-w-[64rem] mx-auto mt-6 text-muted-foreground sm:text-xl text-balance">
-            A significant portion of this blog is dedicated to my tech-related content and the various projects I'm working on. Here, I'll share detailed accounts of my coding adventures, development processes, and the challenges and triumphs I encounter along the way. You'll get an inside look at how I tackle complex problems, implement innovative solutions, and continuously learn and grow in the field of technology. Whether you're a fellow coder, a tech enthusiast, or simply curious about the inner workings of software development, these posts will provide valuable insights and inspiration.
+            A significant portion of this blog is dedicated to my tech-related
+            content and the various projects I'm working on. Here, I'll share
+            detailed accounts of my coding adventures, development processes,
+            and the challenges and triumphs I encounter along the way. You'll
+            get an inside look at how I tackle complex problems, implement
+            innovative solutions, and continuously learn and grow in the field
+            of technology. Whether you're a fellow coder, a tech enthusiast, or
+            simply curious about the inner workings of software development,
+            these posts will provide valuable insights and inspiration.
           </p>
 
           <div className="flex flex-col mt-16 gap-4 justify-center sm:flex-row">
-            <Link href="/blog" className={cn(
-              buttonVariants({ variant: "secondary", size: "lg" }),
-              "w-full sm:w-fit"
-            )}>
-              View The Dumps
-            </Link>
-
-            <Link href={siteConfig.links.repo} target="_blank" rel="noopener noreferrer"
+            <Link
+              href="/blog"
               className={cn(
                 buttonVariants({ variant: "secondary", size: "lg" }),
                 "w-full sm:w-fit"
-              )}>
+              )}
+            >
+              View The Dumps
+            </Link>
+
+            <Link
+              href={siteConfig.links.repo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ variant: "secondary", size: "lg" }),
+                "w-full sm:w-fit"
+              )}
+            >
               Reveal The Sauce
             </Link>
           </div>
@@ -45,19 +66,23 @@ export default function Home() {
       </section>
 
       <section className="container max-w-4xl py-6 lg:py-10 flex flex-col space-y-6 mt-30">
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-center">
-            Latest Posts
-          </h2>
+        <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-center">
+          Latest Posts
+        </h2>
 
-          <ul className="flex flex-col">
-            {
-              latestPosts.map((post) => (
-                <li key={post.slug} className="first:border-t first:border-border">
-                  <PostItem slug={post.slug} title={post.title} description={post.description} date={post.date} />
-                </li>
-              ))
-            }
-          </ul>
+        <ul className="flex flex-col">
+          {latestPosts.map((post) => (
+            <li key={post.slug} className="first:border-t first:border-border">
+              <PostItem
+                slug={post.slug}
+                title={post.title}
+                description={post.description}
+                date={post.date}
+                tags={post.tags}
+              />
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );
