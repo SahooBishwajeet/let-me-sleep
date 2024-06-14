@@ -1,36 +1,290 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# let-me-sleep
 
-## Getting Started
+This is my Blog-Post, or what I like to call "Brain Dump".
 
-First, run the development server:
+## General Template
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+````mdx
+---
+title: <Title Here>
+description: <Description Here>
+date: <YYYY-MM-DD>
+tags: ["tag1", "tag2", "tag3"]
+published: <true/false>
+---
+
+<Content Here>
+````
+
+## Templates
+
+### Add Title & Caption
+
+````mdx
+```js title="Title Here" caption="Caption Here"
+// Code Here
+```
+````
+
+### Show Line Numbers
+
+````mdx
+```js showLineNumbers
+// Code Here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+or 
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```js showLineNumbers{numberToBeginWith}
+// Code Here
+```
+````
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Highlight Lines
 
-## Learn More
+````mdx
+```js {4}
+// Code Here
+```
 
-To learn more about Next.js, take a look at the following resources:
+or 
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```js {4-7}
+// Code Here
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+or 
 
-## Deploy on Vercel
+```js {4,7-9}
+// Code Here
+```
+````
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Highlight Lines By Id
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+````mdx
+```js {1,2}#a {3,4}#b
+// Code Here
+```
+````
+
+### Highlight Words
+
+````mdx
+```js /wordToBeHighlighted/
+// Code Here
+```
+
+or 
+
+```js "wordToBeHighlighted"
+// Code Here
+```
+````
+
+### Highlight Specific Instances Of A Word
+
+````mdx
+```js /wordToBeHighlighted/2-4
+// Code Here
+```
+````
+
+### Highlight Words By Id
+
+````mdx
+```js /wordToBeHighlighted_1/#id1 /wordToBeHighlighted_2/#id2
+// Code Here
+```
+````
+
+### Inline Code Highlighting
+
+````mdx
+`[1,2,3].join(','){:js}`
+````
+
+### Highlight Plain Text
+
+````mdx
+`wordToBeHighlighted{:.<token>}`
+
+e.g. This is a `highighted{:.entity.name.function}` plain text
+````
+
+## GitHub Flavored Markdown
+
+### Headers
+
+```mdx
+# This is a h1 tag
+
+## This is a h2 tag
+
+#### This is a h4 tag
+```
+
+# This is a h1 tag
+
+## This is a h2 tag
+
+#### This is a h4 tag
+
+### Emphasis
+
+```mdx
+_This text will be italic_
+
+**This text will be bold**
+
+_You **can** combine them_
+```
+
+_This text will be italic_
+
+**This text will be bold**
+
+_You **can** combine them_
+
+### Lists
+
+#### Unordered
+
+```mdx
+- Item 1
+- Item 2
+  - Item 2a
+  - Item 2b
+```
+
+- Item 1
+- Item 2
+  - Item 2a
+  - Item 2b
+
+#### Ordered
+
+```mdx
+1. Item 1
+1. Item 2
+1. Item 3
+   1. Item 3a
+   1. Item 3b
+```
+
+1. Item 1
+1. Item 2
+1. Item 3
+   1. Item 3a
+   1. Item 3b
+
+### Images
+
+```mdx
+![GitHub Logo](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
+Format: ![Alt Text](url)
+```
+
+![GitHub Logo](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
+
+### Links
+
+```mdx
+http://github.com - automatic!
+[GitHub](http://github.com)
+```
+
+http://github.com - automatic!
+[GitHub](http://github.com)
+
+### Blockquotes
+
+```mdx
+As Kanye West said:
+
+> We're living the future so
+> the present is our past.
+```
+
+As Kanye West said:
+
+> We're living the future so
+> the present is our past.
+
+### Inline code
+
+```mdx
+I think you should use an
+`<addr>` element here instead.
+```
+
+I think you should use an
+`<addr>` element here instead.
+
+### Syntax highlighting
+
+Here’s an example of how you can use syntax highlighting with [GitHub Flavored Markdown](https://help.github.com/articles/basic-writing-and-formatting-syntax/):
+
+````mdx
+```js:fancyAlert.js
+function fancyAlert(arg) {
+  if (arg) {
+    $.facebox({ div: '#foo' })
+  }
+}
+```
+````
+
+And here's how it looks - nicely colored with styled code titles!
+
+```jsx
+function fancyAlert(arg) {
+  if (arg) {
+    $.facebox({ div: "#foo" });
+  }
+}
+```
+
+### Footnotes
+
+```mdx
+Here is a simple footnote[^1]. With some additional text after it.
+
+[^1]: My reference.
+```
+
+Here is a simple footnote[^1]. With some additional text after it.
+
+[^1]: My reference.
+
+### Task Lists
+
+```mdx
+- [x] list syntax required (any unordered or ordered list supported)
+- [x] this is a complete item
+- [ ] this is an incomplete item
+```
+
+- [x] list syntax required (any unordered or ordered list supported)
+- [x] this is a complete item
+- [ ] this is an incomplete item
+
+### Tables
+
+You can create tables by assembling a list of words and dividing them with hyphens `-` (for the first row), and then separating each column with a pipe `|`:
+
+```mdx
+| First Header                | Second Header                |
+| --------------------------- | ---------------------------- |
+| Content from cell 1         | Content from cell 2          |
+| Content in the first column | Content in the second column |
+```
+
+| First Header                | Second Header                |
+| --------------------------- | ---------------------------- |
+| Content from cell 1         | Content from cell 2          |
+| Content in the first column | Content in the second column |
+
+### Strikethrough
+
+Any word wrapped with two tildes (like `~~this~~`) will appear ~~crossed out~~.
