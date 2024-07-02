@@ -1,0 +1,162 @@
+---
+title: LeetCode Scrapper
+description: A python script to scrap question data from LeetCode
+date: 2024-07-03
+tags: ["python", "scripting", "automation"]
+published: true
+---
+
+Hosted on GitHub : [scrapeet](https://github.com/SahooBishwajeet/scrapeet)
+
+## The Need For This Script
+
+I had a habit of posting solutions to LeetCode problems that I solve on my [GitHub repository](https://github.com/SahooBishwajeet/leetcode).
+But I had to manually copy the question data from the LeetCode website & paste it into a file of certain format which I follow.
+
+The data which I have to manually copy included:
+    1. Question ID
+    2. Question Title
+    3. Question Difficulty
+    4. Problem Statement
+    5. Example Test Cases
+    6. Constraints
+
+So, I thought of automating this process by writing a script which will scrap the question data from the LeetCode website.
+
+> Note : This solves only 1st part of the automation problem that I have. The 2nd part is to automate the process of creating the solution file & copying the question data into it. 
+
+## The Approach
+
+My initial approach was to use `selenium{:bash}` to scrap the data from the link/url of the LeetCode problem. But I hit a roadblock when I couldn't find a way to extract the data from the page source.
+The only way I could think of was to extract HTML elements but the page source was dynamic & it was a burden to target the divs & classes.
+
+Then I came across a [StackOverflow answer](https://stackoverflow.com/a/56610178/21152769) which suggested to use simple `POST{:bash}` requests to get the dynamic content of the page using the `URL Slug{:bash}`.
+I'd like to thank [that stranger](https://stackoverflow.com/users/6241235/qharr).
+
+So, the approach is to send a POST request, for which we can use the `requests{:bash}` library in Python. This request will return a JSON response containing the requested data.
+
+Response json of _(https://leetcode.com/problems/two-sum/description/)_:
+
+```json showLineNumbers title="response.json" /"data"/ /"question"/ /"questionId"/ /"title"/ /"titleSlug"/ /"content"/ /"topicTags"/ /"stats"/ /"__typename"/3 
+{
+  "data": {
+    "question": {
+      "questionId": "1",
+      ...
+      "title": "Two Sum",
+      "titleSlug": "two-sum",
+      "content": "<p>Given an array of integers <code>nums</code>&nbsp;and an integer <code>target</code>, return <em>indices of the two numbers such that they add up to <code>target</code></em>.</p>\n\n<p>You may assume that each input would have <strong><em>exactly</em> one solution</strong>, and you may not use the <em>same</em> element twice.</p>\n\n<p>You can return the answer in any order.</p>\n\n<p>&nbsp;</p>\n<p><strong class=\"example\">Example 1:</strong></p>\n\n<pre>\n<strong>Input:</strong> nums = [2,7,11,15], target = 9\n<strong>Output:</strong> [0,1]\n<strong>Explanation:</strong> Because nums[0] + nums[1] == 9, we return [0, 1].\n</pre>\n\n<p><strong class=\"example\">Example 2:</strong></p>\n\n<pre>\n<strong>Input:</strong> nums = [3,2,4], target = 6\n<strong>Output:</strong> [1,2]\n</pre>\n\n<p><strong class=\"example\">Example 3:</strong></p>\n\n<pre>\n<strong>Input:</strong> nums = [3,3], target = 6\n<strong>Output:</strong> [0,1]\n</pre>\n\n<p>&nbsp;</p>\n<p><strong>Constraints:</strong></p>\n\n<ul>\n\t<li><code>2 &lt;= nums.length &lt;= 10<sup>4</sup></code></li>\n\t<li><code>-10<sup>9</sup> &lt;= nums[i] &lt;= 10<sup>9</sup></code></li>\n\t<li><code>-10<sup>9</sup> &lt;= target &lt;= 10<sup>9</sup></code></li>\n\t<li><strong>Only one valid answer exists.</strong></li>\n</ul>\n\n<p>&nbsp;</p>\n<strong>Follow-up:&nbsp;</strong>Can you come up with an algorithm that is less than <code>O(n<sup>2</sup>)</code><font face=\"monospace\">&nbsp;</font>time complexity?",
+      ...
+      "topicTags": [
+        {
+          "name": "Array",
+          "slug": "array",
+          "translatedName": null,
+          "__typename": "TopicTagNode"
+        },
+        {
+          "name": "Hash Table",
+          "slug": "hash-table",
+          "translatedName": null,
+          "__typename": "TopicTagNode"
+        }
+      ],
+      ...
+      "stats": "{\"totalAccepted\": \"13.6M\", \"totalSubmission\": \"25.7M\", \"totalAcceptedRaw\": 13641591, \"totalSubmissionRaw\": 25743266, \"acRate\": \"53.0%\"}",
+      ...
+      "__typename": "QuestionNode"
+    }
+  }
+}
+
+```
+
+## The Script 
+
+### Overview
+
+This is the script which I wrote to scrap the question data from the LeetCode website:
+
+```python showLineNumbers title="scrapper.py" {16-17,19}
+import requests
+from bs4 import BeautifulSoup as bs
+
+def scrapper(titleSlug : str):
+    data = {
+    "operationName":"questionData",
+    "variables":{"titleSlug":titleSlug},
+    "query":"query questionData($titleSlug: String!) \
+            {\n  question(titleSlug: $titleSlug)     \
+                {\n questionId\n questionFrontendId\n boundTopicId\n title\n titleSlug\n content\n translatedTitle\n translatedContent\n isPaidOnly\n difficulty\n likes\n dislikes\n isLiked\n similarQuestions\n contributors {\n   username\n   profileUrl\n   avatarUrl\n   __typename\n }  \
+                 \n langToValidPlayground\n topicTags {\n   name\n   slug\n   translatedName\n   __typename\n }\n companyTagStats\n codeSnippets {\n   lang\n   langSlug\n   code\n   __typename\n }\n stats\n hints\n solution {\n   id\n   canSeeDetail\n   __typename\n }  \
+                 \n status\n sampleTestCase\n metaData\n judgerAvailable\n judgeType\n mysqlSchemas\n enableRunCode\n enableTestMode\n envInfo\n libraryUrl\n __typename\n  }  \
+            \n}\n"
+    }
+
+    r = requests.post("https://leetcode.com/graphql", json=data).json()
+    soup = bs(r["data"]["question"]["content"], "html.parser")
+
+    return r, soup
+```
+
+### Deep Dive Into The Script
+
+1. Import the necessary libraries:
+    - `requests{:bash}`: To send the POST request.
+    - `BeautifulSoup{:bash}`: To parse the HTML content.
+
+2. The dictionary containing the GraphQL query to be sent in the POST request:
+    ```python showLineNumbers /$titleSlug: String!/
+    data = {
+        "operationName": "questionData",
+        "variables": {"titleSlug": titleSlug},
+        "query": """query questionData($titleSlug: String!) 
+        { ... }"""
+    }
+    ```
+
+    The query requests various details about the problem, including its ID, title, content, difficulty, tags, code snippets, and more.
+
+3. Send the POST request:
+    ```python showLineNumbers "https://leetcode.com/graphql"
+    r = requests.post("https://leetcode.com/graphql", json=data).json()
+    ```
+
+4. Parse the HTML content of the problem statement:
+    ```html
+    <p>Given an array of integers <code>nums</code>&nbsp;
+    ....
+    ....
+    <font face="monospace">&nbsp;</font>time complexity?'
+    ```
+
+    We care only about the plain text of the content. So, to remove the HTML tags and get the plain text, we use the `BeautifulSoup{:bash}` library:
+
+    ```python showLineNumbers /html.parser/
+    soup = bs(r["data"]["question"]["content"], "html.parser")
+    ```
+
+## Formatting This To Fit My Use Case
+
+I don't freaking want the entirety of the json response. What should I do with `companyTagStats`, `judgeType`, `mysqlSchemas`, etc.?
+I had a simple use-case, which was to get the `questionId`, `title`, `difficulty` & `content` which I would pass onto some other file.
+
+So, I simply extracted the required data from the json response one by one:
+
+```python showLineNumbers /replace(u'\xa0', u' ')/
+    ...
+    question_id = r["data"]["question"]["questionId"]
+    title = r["data"]["question"]["title"]
+    content = soup.get_text().replace(u'\xa0', u' ')
+    difficulty = r["data"]["question"]["difficulty"]
+    ...
+    # Some more code to split content into problem statement, example test cases & constraints
+    return ...
+```
+
+What the heck is `u'\xa0'{:bash}`? It is a non-breaking space character in Unicode, which was being used in the HTML content. 
+We, don't want any unnecessary characters in our content _(as it may break the output anytime)_, so I replaced it with a normal space. 
+
+## For Some Other Night
+
+> Stick around for the next part where I'll automate the process of creating the solution file & copying the question data into it. Also, I maintain a README file which acts as a log of all the solutions. I'll automate the process of updating the README file as well.
