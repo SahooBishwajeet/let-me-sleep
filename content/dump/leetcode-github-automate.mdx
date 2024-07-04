@@ -1,0 +1,208 @@
+---
+title: Leetcode Solution Automation For Github
+description: A python script to generate solution files for LeetCode problems to be pushed to GitHub.
+date: 2024-07-04
+tags: ["python", "scripting", "automation"]
+published: true
+---
+
+## Continuation...
+
+As I've already mentioned in [my previous dump](https://letmesleep.sahoobishwajeet.xyz/dump/leetcode-scrapper), I had a habit of posting solutions to LeetCode problems that I solve on my [GitHub repository](https://github.com/SahooBishwajeet/leetcode).
+
+In that dump I solved the 1st part of the problem, which was to scrap the question data from the LeetCode website.
+Now, I need to automate the 2nd part of the problem i.e. the process of generating the solution file.
+And as I maintain a README file _(as a log of all the solutions)_, I've to automate the process of updating that file as well.
+
+## The Problem To Solve
+
+I've a specific template for the solution files which I maintain in my repository. It is like a design standard which I've imposed on myself 😁.
+
+```cpp title="<QuestionID>_<Question_Title>.cpp"
+// <Question ID> : <Question Title>
+
+/*
+<Problem Statement>
+*/
+
+/*
+<Example Test Cases>
+*/
+
+/*
+<Constraints>
+*/
+
+/*
+<My Approached Explained>
+*/
+
+class Solution {
+public:
+    function_name() {
+        // Code goes here
+    }
+};
+```
+
+So, I just need to perform these things in order:
+
+1. Extract the question data from the LeetCode website.
+2. Create a file with my solution for the problem.
+3. Either create a new file for the explanation of the approach or write it in the same file.
+4. Generate a new CPP file with the extracted data & the solution.
+5. Update the README file with the new solution.
+
+**Pretty simple, right?**
+
+I guess it isn't so simple as it sounds.
+I've another habit of overcomplicating things 😓, the logs are supposed to be maintained in ascending order of Question ID. 
+So, I can't just simply append the new entry to the end of the README file. Instead, I've to find the correct position to insert the new entry.
+
+No worries, it's not that hard to do but I'm too sleepy 😴.
+
+
+## Let's Code It
+
+### The Input File
+
+I'll be using a simple text file to store data such as `URL{:bash}`, `My Approach{:bash}` & `Solution{:bash}`, which I'll be using to generate the solution file.
+
+```txt title="input.txt"
+https://leetcode.com/problems/<problem-name>/description/
+
+/*
+<Approach Explained Here>
+*/
+
+class Solution {
+public:
+    function_name() {
+        // code here
+    }
+};
+```
+
+### Time For Some REGEX Magic
+
+Now, we need to separately take them from the input file. There are many ways to do this, but I'll be using REGEX (`re{:bash}` module in Python) to extract the data.
+I'll be using the patterns in detail in the script, but here's a brief overview:
+
+```python showLineNumbers title="extract_data.py" {2-3,12}
+def extract_from_input(content : str):    
+    urlPattern = r'https://leetcode.com/problems/[\w-]+/description/'
+    commentPattern = r'/\*([^*]|[\r\n]|(\*([^/]|[\r\n])))*\*/'
+
+    urlMatch = re.search(urlPattern, content, re.MULTILINE)
+    commentMatch = re.search(commentPattern, content, re.MULTILINE)
+    
+    url = urlMatch.group(0) if urlMatch else None
+    comment = commentMatch.group(0) if commentMatch else None
+    
+    index = commentMatch.end() if commentMatch else 0
+    code = content[index:].rstrip()
+
+    return url, comment, code
+```
+
+#### The URL Pattern
+
+```python title="urlPattern" /[\w-]+/
+urlPattern = r'https://leetcode.com/problems/[\w-]+/description/'
+```
+
+`[\w-]+{:regex}` matches any number of instances of characters _(equal to `[a-zA-Z0-9_]{:regex}`)_ & _`-{:regex}`_.
+
+#### The Comment Pattern
+
+```python title="commentPattern" /([^*]|[\r\n]|(\*([^/]|[\r\n])))*\*/
+commentPattern = r'/\*([^*]|[\r\n]|(\*([^/]|[\r\n])))*\*/'
+```
+
+1. `/\*{:regex}` matches the starting of the comment.
+2. `({:regex}` opens a group.
+    - `[^*]{:regex}` negates the `*{:regex}` character i.e. it consumes any `*{:regex}` which is potentially not the end of the comment in `*/{:regex}`.
+    - `[\r\n]{:regex}` matches any return or newline character.
+    - `|{:regex}` is the OR operator.
+    - `(\*([^/]|[\r\n])){:regex}` matches any nested sequences of comments.
+3. `)*{:regex}` marks the end of the group & matches any number of instances of the group.
+4. `\*/{:regex}` matches the end of the comment.
+
+### Generate The Solution File
+
+```python showLineNumbers title="generate_solution.py" 
+...
+url, comment, code = extract_data(content)
+questionId, title, question, difficulty, example, constraint = scrape_data(url)
+
+fileName = f'{questionId}_{title.replace(' ', '_')}.cpp'
+
+with open(fileName, 'w') as f:
+    f.write(f'// {questionId} : {title}\n\n')
+    f.write(f'/*\n{question}\n*/\n\n')
+    f.write(f'/*\n{example}\n*/\n\n')
+    f.write(f'/*\n{constraint}\n*/\n\n')
+    f.write(comment)
+    f.write(code)
+```
+
+No rocket science here, just writing the scraped data & the extracted data into a file with the required format.
+Note that the file name is generated using the `questionId{:bash}` & `title{:bash}` of the question as I required.
+
+### Update The README File
+
+```python showLineNumbers title="update_readme.py" {11-12, 14}
+readme_path = '../README.md'
+if not os.path.exists(readme_path):
+    with open(readme_path, 'w') as f:
+        # Create the README file if it doesn't exist
+        
+with open(readme_path, 'r') as f:
+    lines = f.readlines()
+    
+table_start = lines.index("| # | Title | Solution |\n")
+insert_index = table_start + 2
+while insert_index < len(lines) and lines[insert_index].split("|")[1] < f"{int(questionId):04d}":
+    insert_index += 1
+    
+new_entry = f"|{int(questionId):04d}|[{title}]({url})|[cpp](Solutions_CPP/{fileName})|\n"
+lines.insert(insert_index, new_entry)
+
+with open(readme_path, 'w') as f:
+    f.writelines(lines)
+```
+
+First of all we need to extract the content of the README file & find the correct position to insert the new entry.
+For that I'll simply iterate over the lines of the README file, match the `#{:c}` of the question ID from the table with the current question ID.
+
+When I get the index for the new entry, I'll insert the new entry using `insert(self, index: SupportsIndex, object: _T, /){:bash}` method.
+Finally, I'll write the updated content back to the README file.
+
+## Automate GitHub Push?
+
+> In my opinion this is just an overkill. Let's not be too lazy 😅.
+
+But here is the script for those who want to automate the push to GitHub. We can use the `gitpython{:bash}` module to automate the push to GitHub.
+
+> Note that you need to install the `gitpython{:bash}` module to use this script.
+
+```python showLineNumbers title="push_to_github.py"
+from git import Repo
+
+repo = Repo('<path-to-repo>')
+origin = repo.remote("origin")  
+assert origin.exists()
+
+msg = "<your-commit-message>"
+
+repo.git.add('.')
+repo.git.commit('-m', msg)
+repo.git.push("--set-upstream", origin, repo.head.ref)
+```
+
+Read more about the module & advanced usage from [GitPython docs](https://gitpython.readthedocs.io/en/stable/tutorial.html).
+
+
+## For Some Other Night
+
+> Hey... A little secret about me. I tend to forget things I've got to do. Using wall notes has helped me a lot but I had this idea of creating a Task Management System. To add an element of interest, I'm considering developing it with both CLI and GUI interfaces. And for an extra challenge, **WHY NOT MAKE IT IN C ???** 😂😱
