@@ -1,0 +1,309 @@
+---
+title: Quake III Algorithm Explained
+description: A verbose explanation of the Quake III algorithm for Inverse Square Root calculation.
+date: 2024-07-09
+tags: ["algorithm", "explained"]
+published: true
+---
+
+Read More : [Fast Inverse Square Root](https://en.wikipedia.org/wiki/Fast_inverse_square_root)
+
+I was just randomly scrolling through the internet when I came across this very interesting algorithm to
+calculate the inverse square root of a number. The algorithm is known as the Quake III algorithm, named after
+the game Quake III Arena, where it was first used.
+
+## Fast? Ingenious?...But Why?
+
+By this question, I mean why would we even need a fast inverse square root calculation? Where can it be used?
+
+If I was to write a code to calculate the inverse square root of a number, I would have written this:
+
+```c showLineNumbers title="inverse_sqrt.c" {4}
+#include <math.h>
+
+float inverse_sqrt(float x) {
+    return 1.0f / sqrt(x);
+}
+```
+
+But, this is slow. The `sqrt` function is slow. It is a complex function that involves a lot of calculations under the hood. 
+
+Now, coming back the question of why we need a faster algorithm.
+In `Game Development`, we need to normalize the vectors while dealing with physics stuffs such as lighting, shadows, etc.
+To normalize a vector, we use this formula:
+
+```c showLineNumbers
+x = x / sqrt(x*x + y*y + z*z);
+y = y / sqrt(x*x + y*y + z*z);
+z = z / sqrt(x*x + y*y + z*z);
+```
+
+Here we have to calculate the square root as well as perform a division operation 😱. Imagine a game, running at a said frames per second,
+with each frame having numerous surfaces for which we need to calculate the normal vector. We can't simply go with the naive approach of calculating it, right? 
+
+> Now, I'll be honest with you with one thing. This algorithm gets an close approximation of the inverse square root, not the exact value. But since it is fast, we overlook the said 1% error it makes.
+
+## Behold The Quake III
+
+> Note: This is the original source code. I've not changed anything in it.
+
+```c showLineNumbers title="quakeIII.c"
+float Q_rsqrt(float number)
+{
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5F;
+    
+    x2 = number * 0.5F;
+    y  = number;
+    i  = * ( long * ) &y;                       // evil floating point bit level hacking
+    i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    // y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+    return y;
+}
+```
+
+So, let's just skim over it and try to understand what is going on.
+
+1. Declarations:
+    - `long i {:c}` : A 32-bit integer
+    - `float x2, y {:c}` : Two 32-bit decimal number
+    - `const float threehalfs = 1.5F {:c}` : A 32-bit decimal representing `3/2`
+
+2. Halfs & Fulls
+    - `x2 - number * 0.5F {:c}` : Copy half of original number into x2
+    - `y - number {:c}` : Copy original number into y
+
+3. The Black Magic
+    - This comprises of 3 stages, which we will discuss in details furter ahead.
+    - It includes some cool addressing trickery, WTF number & newton iteration for approximation.
+
+## IEEE 754
+
+<details>
+<summary><b>TL;DR (This sections explains IEEE 754. If you know about it already, feel free to skip this)</b></summary>
+
+Before we actually start to read & understand the code, we need to know how are decimal/float-point numbers stored in memory.
+
+No need to say that numbers are stored in bits 😅.
+We are given 16/32/64-bits to work with. If we put a decimal number in the middle, then how do we store a decimal number, right?
+It will work but just look at the number of bits we are wasting. In case of 32-bits, we can store numbers in range `[ 0, 2^32 ] {:bash}`
+& if we account for negative numbers (adding a singed-bit in the front) then we can store numbers in range `[ -2^31, 2^31 ] {:bash}`. 
+
+So, smart people came up with a way to store decimal numbers in a more efficient way. They took the idea similar to scientific notation
+i.e. `16.25 = 1 * 1.625 * 10^1 {:bash}` & `-16.25 = -1 * 1.625 * 10^1 {:bash}`.  
+
+So, what do we need?
+    - A sign bit to store the sign of the number.
+    - A mantissa to store the significant digits of the number.
+    - An exponent to store the power of 2 to which the mantissa is raised.
+
+The number of bits are reserved for each of these fields:
+    | Format | Total | Sign | Exponent | Mantissa |
+    |--------|-------|------|----------|----------|
+    | Half   | 16    | 1    | 5        | 10       |
+    | Single | 32    | 1    | 8        | 23       |
+    | Double | 64    | 1    | 11       | 52       |
+
+For 32-bit number, we have exponent = 8 bits, but we have to include negative exponents as well.
+So, instead of the desired range of `[ 0, 2^8 ] {:bash}`, we have `[ -2^7, 2^7 ] {:bash}`.
+Hence, the standard uses a `bias exponent {:bash}` by simply adding `127` to the exponent value 
+i.e. to represent `2^0 {:bash}`, we store `127 {:bash}` in the exponent field.
+
+For the remaining 23 bits, we notice an interesting thing that can only happen in binary.
+The mantissa is always in the form `1.xxxxxx... {:bash}`. So, we don't actually need a bit to store the `1 {:bash}`.
+Instead we just fix it in the mantissa during the calculation.
+
+The diagram below shows the calculation of the decimal number `-27.15625 {:bash}` in IEEE 754 format.
+
+![IEEE 754 Format](https://media.licdn.com/dms/image/D5612AQEd3lyKvkVl7Q/article-cover_image-shrink_720_1280/0/1689253680464?e=2147483647&v=beta&t=bpHgfh9J7zpOuy8TjCild2wdnlcsQZ2SR0jt03OixqM)
+
+There are more types of numbers such as:
+    - `NaN {:bash}` : Not a Number
+    - `Infinity {:bash}` : Positive & Negative Infinity
+    - `Denormalized Numbers {:bash}` : Numbers which are too small to be represented in the standard format.
+    - `Zero {:bash}` : Positive & Negative Zero
+
+But we won't be encountering them in our use-case.
+
+</details>
+
+1. Further Reads : [IEEE 754 Wiki](https://en.wikipedia.org/wiki/IEEE_754)
+2. A Cool Visualiser : [IEEE 754 Visualiser](https://bartaz.github.io/ieee754-visualization/)
+
+## A Little Bit Of Mathematics
+
+Let's do something that will come in handy later on.
+Now, let's see the representation of a number in IEEE 754 format:
+
+```bash
+number = (1 + M / 2^23) * 2^(E - 127)
+```
+
+Let's take the `logarithm (base 2) {:bash}` of the expression:
+
+```bash
+=> log2(number) = log2((1 + M / 2^23) + 2^(E - 127))
+                = log2(1 + M / 2^23) + E - 127
+```
+
+We know another interesting fact that `log2(1 + x) ≈ x {:bash}` for small values of `x {:bash}`. Here is the [proof](https://math.stackexchange.com/questions/1111041/showing-y%E2%89%88x-for-small-x-if-y-logx1).
+
+```bash
+=> log2(number) ≈ M / 2^23 + μ + E - 127 # μ is the error correction 
+```
+
+After some rearrangement, we get:
+
+```bash
+=> log2(number) ≈ 1 / 2^23 * (M + E * 2^23) + μ - 127
+```
+
+Voilla! We can see the bit representation of the number in the above expression. And to calculate the logarithm, we just need to scale & shift the bits.
+So, essentially the IEEE 754 format is somewhat equal to the logarithm of the number. NICE 😎!!!
+
+## Black Magic Explained
+
+### Evil Bit Hacking
+
+We want to do some bit manipulation with our number.
+But, unfortunately in C, we are nt allowed to do bit manipulation with floating point numbers.
+So, we need a way to convert it into a data type that allows bit manipulation.
+
+One could think of typecasting the number into an integer, but that won't work.
+`i = (long) y {:c}` will just truncate the decimal part of the number & won't preserve the bit representation of our original number.
+
+But what can we do instead is to trick the compiler into thinking that we have an integer, but we actually have a float.
+Holy Moly! 😱 we can do this??? Yes, everything is possible in C 😁.
+
+So, how do we do this? We change the type of the pointer pointing to this number to a pointer of an integer.
+This will make the compiler think that the address we are pointing to is that of an integer.
+
+```c showLineNumbers title="quakeIII.c" {4,6}
+float Q_rsqrt(float number)
+{   
+    ...
+    i  = * ( long * ) &y;                       // evil floating point bit level hacking
+    i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
+    y  = * ( float * ) &i;
+    ...
+    return y;
+}
+```
+
+1. `&y {:c}` extracts the address of `y {:c}`
+2. `( long * ) {:c}` casts the type of pointer to the address as that of a long integer
+3. `* (..... {:c}` dereferences the address i.e. reads the bits in that address
+
+In the second part, we convert it back to floating points for further calculation.
+
+### What The Fuck?
+
+Bit manipulations are cool. We can multiple, divide & even change exponents by shifting the bits.
+
+```c showLineNumbers title="quakeIII.c" {4}
+float Q_rsqrt(float number)
+{   
+    ...
+    i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
+    ...
+    return y;
+}
+```
+
+For a number `x^1 {:bash}`:
+    1. Doubling the exponent `x^2 {:bash}` : Squares the number
+    2. Halving the exponent `x^(1/2) {:bash}` : Gives the square root of the number
+    3. Negating the above `x^-(1/2) {:bash}` : Give the inverse square root of the number
+
+Now, recall that a IEEE 754 format is more or less approximately equal to the logarithm of the number.
+So, instead of calculating `x^-(1/2) {:bash}`, we will find `log2(x^-(1/2)) {:bash}`
+
+```bash
+Let Δ be the inverse square root of x
+
+=> log2(Δ) = log2(x^-(1/2))
+=> log2(Δ) = -(1/2) * log(x)
+
+Replacing with bit representation,
+
+=> 1 / 2^23 * (M(Δ) + E(Δ) * 2^23) + μ - 127 = -(1/2) * ( 1 / 2^23 * (M(x) + E(x) * 2^23) + μ - 127 )
+
+After some calculations,
+
+=> M(Δ) + E(Δ) * 2^23 = 3/2 * 2^23 * (127 - μ) - 1/2 * (M(x) + E(x) * 2^23)
+=> M(Δ) + E(Δ) * 2^23 = 0x5f3759df - 1/2 * (M(x) + E(x) * 2^23)
+
+Instead of dividing by 2, we can bit shift it to the right by 1.
+
+=> Δ = 0x5f3759df - ( x >> 1 )
+```
+
+### Newton Iteration
+
+Newton Iteration is a method to approximate the roots of a function, by taking an approximation & returning a better approximation.
+It does so by taking the tangent to the curve at the current approximation & finding the point where the tanget meets the x-axis.
+
+So, we have the equation:
+
+```bash
+x' = x - f(x) / f'(x)
+```
+
+For our case, we have the function `f(y) = 1/y^2 - x {:bash}`, since for `y = 0, f(y) = 1/√x {:bash}`.
+The derivative of the function is `f'(y) = -2 / y^3 {:bash}`.
+
+```bash
+=> y' = y - (1/y^2 - x) / (-2 / y^3)
+=> y' = y (3 - x * y^2) / 2
+```
+
+So, `y' = y * (3/2 - (x/2 * y * y)) {:bash}` i.e. `y * (threehalfs - (x2 * y * y)) {:bash}`
+
+```c showLineNumbers title="quakeIII.c" {4-5}
+float Q_rsqrt(float number)
+{
+    ...
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    // y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+    return y;
+}
+```
+
+## Some Modern Developments
+
+In modern C++, the usual method for implementing this function's casts is through C++20's `std::bit_cast {:cpp}`. This also allows the function to work in `constexpr {:cpp}` context:
+
+```cpp showLineNumbers title="quakeIII.cpp"
+# include <bit>
+# include <limits>
+# include <cstdint>
+
+constexpr float Q_rsqrt(float number) noexcept
+{
+  static_assert(std::numeric_limits<float>::is_iec559); // (enable only on IEEE 754)
+
+  float const y = std::bit_cast<float>(
+    0x5f3759df - (std::bit_cast<std::uint32_t>(number) >> 1));
+  return y * (1.5f - (number * 0.5f * y * y));
+}
+```
+
+New constants were found which reducced the relative error in the approximation by factor of 2.7.
+
+```c title="new_constants.c"
+i = 0x5F1FFFF9 - ( i >> 1 );
+y = y * 0.703952253f * ( 2.38924456f - x * y * y );
+
+return y;
+```
+
+> And this was the last piece of the puzzle. Huff!!! What an amazing algorithm this is😅.
+
+## For Some Other Night
+
+> I'm still stuck in the design of Task Management Application in C. It would take a while to think about it & come up with a good approach to proceed with. Meanwhile, I'll dump topics/things like this, which I find intriguing & worth sharing. Maybe some RANDOMIZATION next time 💁.
