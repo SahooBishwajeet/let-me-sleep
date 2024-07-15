@@ -35,6 +35,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-pt-[4rem]">
+      <head>
+        <meta
+          name="google-site-verification"
+          content="9sBUueJnBTZul7ZCTzkuRep67p9AztmnEouTA5FZbyA"
+        />
+      </head>
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
