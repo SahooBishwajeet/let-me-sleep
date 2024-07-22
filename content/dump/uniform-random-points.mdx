@@ -1,0 +1,414 @@
+---
+title: Uniform Random Points Generation
+description: Some intriguing stuff about generating uniformly distributed random points in a circle.
+date: 2024-07-22
+tags: ["explained", "offtopic", "python", "probability"]
+published: true
+---
+
+Ever thought about generating uniformly distributed random points in a circle? 🤔
+Wow, what a question to ask. Why would a completely sane person think about generating random points in a circle out of nowhere?
+But hey, I'm not completely sane. 😅
+
+Jokes apart, intially I thought there might be one or two ways to do this, which pretty much I've already guessed.
+But as I started to dig deeper, I fell in a deep rabbit hole of mathematics & algorithms.
+
+<Callout type = "danger"> Note : For simplicity purposes, I'll consider a circle of radius = 1, inscribed by a square of side length = 2, centered at origin. </Callout>
+
+![init.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/init.png?raw=true)
+
+<details>
+<summary><b>TL;DR (The python code used to generate the gifs used in this dump)</b></summary>
+
+```python title="uniform_random_points.py" showLineNumbers
+import math
+import random
+from typing import List, Tuple
+
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation, PillowWriter
+
+Point = Tuple[float, float]
+
+# Function To Generate Random Points
+def generate_points(n_points : int, case : str) -> List[Point]:
+    points : list[Point] = []
+    if case == "rejection_sampling":
+        while len(points) < n_points:
+            x = random.uniform(-1, 1)
+            y = random.uniform(-1, 1)
+            if x**2 + y**2 <= 1:
+                points.append((x, y))
+    elif case == "polar_coordinates":
+        while len(points) < n_points:
+            r = random.uniform(0, 1)
+            theta = random.uniform(0, 2 * math.pi)
+            x = r * math.cos(theta)
+            y = r * math.sin(theta)
+            points.append((x, y))
+    elif case == "inverse_tansform_sampling":
+        while len(points) < n_points:
+            r = math.sqrt(random.uniform(0, 1))
+            theta = random.uniform(0, 2 * math.pi)
+            x = r * math.cos(theta)
+            y = r * math.sin(theta)
+            points.append((x, y))
+    elif case == "infinite_triangle":
+        while len(points) < n_points:
+            a = random.uniform(0, 1)
+            b = random.uniform(0, 1)
+            theta = random.uniform(0, 2 * math.pi)
+
+            r = a + b
+            if r > 1:
+                r = 2 - r
+
+            x = r * math.cos(theta)
+            y = r * math.sin(theta)
+            points.append((x, y))
+
+    return points
+
+def beautify_plot(fig : plt.Figure, ax : plt.Axes) -> None:
+    ax.set_aspect("equal")
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-1.2, 1.2)
+
+    fig.patch.set_facecolor("#2e2e2e")
+    ax.set_facecolor("#2e2e2e")
+    ax.axhline(y = 0, color = "white", linewidth = 0.5, linestyle = "--")
+    ax.axvline(x = 0, color = "white", linewidth = 0.5, linestyle = "--")
+    # ax.grid(True, color = "white", linestyle = "--", linewidth = 0.5)
+    ax.tick_params(axis="x", colors="white")
+    ax.tick_params(axis="y", colors="white")
+    for spine in ax.spines.values():
+        spine.set_edgecolor("white")
+
+    circle = plt.Circle((0, 0), 1, edgecolor="#03a9f4", facecolor="none", linewidth = 1.5)
+    ax.add_patch(circle)
+    square = plt.Rectangle((-1, -1), 2, 2, edgecolor="#f44336", facecolor="none", linewidth = 1.5)
+    ax.add_patch(square)
+
+def create_animation(case : str, duration : int, fps : int, num_points : int = 1000) -> None:
+    # Plot Setup
+    fig, ax = plt.subplots()
+    beautify_plot(fig, ax)
+
+    (points,) = ax.plot([], [], "o", markersize = 0.8, color = "#8bc34a")
+    text = ax.text(1.0, 1.05, '', color = "white", transform = ax.transAxes, ha = "right")
+
+    points_list : List[Point] = []
+
+    # Animation Initialization
+    def init() -> Tuple[plt.Line2D]:
+        points_list.clear()
+        points.set_data([], [])
+        text.set_text('')
+        return points, text
+
+    # Animation Updation
+    def update(frame : int) -> Tuple[plt.Line2D]:
+        pts_to_generate = num_points // (duration * fps)
+        new_points = generate_points(pts_to_generate, case)
+        points_list.extend(new_points)
+        points.set_data(
+            [point[0] for point in points_list], [point[1] for point in points_list]
+        )
+        text.set_text(f'Points: {len(points_list)}')
+        return points, text
+
+    # Animation Generation
+    total_frames : int = duration * fps
+    ani = FuncAnimation(fig, update, frames=range(total_frames), init_func=init, blit=True)
+
+    # Animation Saving
+    writer = PillowWriter(fps=fps)
+    ani.save(f'{case}.gif', writer=writer)
+
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    duration = 10
+    fps = 15
+    num_points = 3000
+
+    animation_types = ["rejection_sampling", "polar_coordinates", "inverse_tansform_sampling", "infinite_triangle"]
+
+    for case in animation_types:
+        create_animation(case, duration, fps, num_points)
+        print(f"Animation for {case} created successfully & Saved as {case}.gif !")
+```
+
+</details>
+
+## Rejection Sampling
+
+
+The most trivial method one could think of is to generate random points in a square (well because it's easy as hell : just pick a random value for `x` & `y` in the desired range) & then check if the point lies inside the circle or not.
+If it does, then we keep it/plot it, else we reject it. Hence the name `Rejection Sampling`.
+
+### The Algorithm
+
+```python showLineNumbers {5}
+def rejection_sampling:
+    while (your_condition_here):
+        x = random.uniform(-1, 1)
+        y = random.uniform(-1, 1)
+        if x**2 + y**2 <= 1:
+            return (x, y)
+```
+
+The function simply generates 2 random points, each in the range `[-1, 1]` & then checks if the point lies inside the circle or not.
+Which is done by finding the distance of the point from the origin i.e. `D(x, y) = √(x^2 + y^2) {:python}` & checking if it is less than or equal to the radius of the circle, which would mean that the point lies within the bounds of the circle.
+
+![rejection_sampling.gif](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/rejection_sampling.gif?raw=true)
+
+
+### Efficiency
+
+This method is quite simple and does a pretty decent job. But the problem with this approach is that we are generating a lot of points which are getting rejected.
+So, the efficiency of this method reduces a lot. Upto what extent you ask? Well, let's find out.
+
+> Efficiency = Correct Points / Total Points
+
+```bash
+This can be related to the area of the circle & the square i.e.
+The probability of a point lying inside the circle = Area of Circle / Area of Square
+
+Area Of Circle = (π * r^2) = (π * 1^2) = π
+Area Of Square = (2 * r)^2 = (2 * 1)^2 = 4
+```
+
+> So, the efficiency of this method is π / 4 ≈ 0.785 ≈ 78.5%.
+
+```bash
+Pushing the boundaries of probability a bit, we can say that:
+
+1. Consecutive Failures:
+    Probability of "n" consecutive failures = (1 - π / 4)^n
+    So, there is a 0.0021% chance of getting 4 consecutive failures, which is very very low.
+
+2. Average Attempts:
+    Average number of attempts to get a correct points = E(n) = 1 / P
+                                                       = 1 / (π / 4) = 4 / π ≈ 1.27
+    So, on average, approximately every point generated will be correct.
+
+    # Yeah I know, it's a big round-off, but hey it's just an approximation.
+```
+
+## Polar Coordinates
+
+In the previous method, we were limiting ourself to the cartesian coordinates. But, since we are dealing with a circle, why not switch to something suited for circles, right?
+So, we switch to `Polar Coordinates`. I'll do a quick recap of polar coordinates, don't worry 😅.
+
+### Polar Coordinates
+
+Instead of representing a point in a plane using `x` & `y` coordinates, we represent it using `r` & `θ` coordinates.
+Where, `r` is the distance of the point from the origin & `θ` is the angle made by the point with the positive x-axis.
+So, basically, we fix a circle of radius `r` & then move the point along the circle by chaning the angle `θ`.
+
+[Read More Here](https://en.wikipedia.org/wiki/Polar_coordinate_system)
+
+Since, we are guaranteed that the point lies within the circle, we can generate the points directly in the polar coordinates without any need of rejection.
+So, what do we do? We generate a random value for `r` in the range `[0, 1]` & `θ` in the range `[0, 2π]`, which can be converted back to cartesian coordinates using the formulae:
+
+```bash
+x = r * cos(θ)
+y = r * sin(θ)
+```
+
+### The Algorithm
+
+```python showLineNumbers {5-6}
+def polar_coordinates:
+    while (your_condition_here):
+        r = random.uniform(0, 1)
+        theta = random.uniform(0, 2 * math.pi)
+        x = r * math.cos(theta)
+        y = r * math.sin(theta)
+        return (x, y)
+```
+
+The function simply generates a random value for `r` in the range `[0, 1]` & `θ` in the range `[0, 2π]`.
+Then, it converts these polar coordinates to cartesian coordinates using the formulae mentioned above.
+
+![polar_coordinates.gif](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/polar_coordinates.gif?raw=true)
+
+
+### Problem, Problem, Problem
+
+Are the points generated uniformly distributed in the circle? 🤔. Clearly, as we can see in the animation, it isn't.
+The centre of the circle seems to have more points for some reason.
+So, what went wrong? We know that `θ` is uniformly distributed in the range `[0, 2π]`, but what about `r`?
+
+The random generation of `r` is uniform, not a question about that. But the problem lies with the density of points.
+Since we are following the fact that on average each radius would have same number of points chosen, the points gets sparsely distributed as we increase the size of the circle.
+So, the points are not getting uniformly scattered around the circle.
+
+## Inverse Transform Sampling
+
+So, what we need to do is somehow manage the density of points in the circle. How do we do that? 🤔
+Well, we have something called `Probability Density Function (PDF)` which can help us with this.
+
+> A Probability Density Function (PDF) is a function that describes the likelihood of a random variable taking on a particular value.
+> It is used to specify the probability of the random variable falling within a particular range of values.
+> i.e. `f(x) = P(a <= X <= b) {:bash}`
+
+[Read More Here](https://en.wikipedia.org/wiki/Probability_density_function)
+
+Now, we have to find the PDF for this.
+
+```bash
+Since, circumference of the circle grows linearly with radius i.e. C = 2πr
+Number of points in the circle should grow linearly with radius as well.
+
+i.e. f(r) = M * r                                 ------- (1)
+& we know from definition, P(0 <= r <= 1) = 1     ------- (2)
+
+From (1) & (2), we can find the value of M as:
+    => ∫[0, 1] f(r) dr = 1
+    => ∫[0, 1] (M * r) dr = 1
+    => M * (r^2 / 2) | [0, 1] = 1
+    => M * (1 / 2) = 1
+    => M = 2
+
+So, our PDF becomes f(r) = 2 * r
+i.e. We should generate points with a probability of 2 * r, instead of uniform probability.
+```
+
+Before we proceed, we need some mechanism to add to our previous uniform random number generator to generate points with a probability of `2 * r`.
+Here comes the `Inverse Transform Sampling` to the rescue.
+
+> Inverse Transform Sampling is a method which takes a uniform distribution & transforms it into a non-uniform distribution
+> based on the CDF of the non-uniform distribution.
+
+[Read More Here](https://en.wikipedia.org/wiki/Inverse_transform_sampling)
+
+CDF ??? What's that? 🤔
+
+> A Cumulative Distribution Function (CDF) is a function that describes the probability that a real-valued random variable X with a given probability distribution will be found at a value less than or equal to x.
+> i.e. `F(x) = P(X <= x) {:bash}`
+
+[Read More Here](https://en.wikipedia.org/wiki/Cumulative_distribution_function)
+
+It's basically the integral of the PDF from `-∞` to `x`.
+
+```bash
+F(x) = ∫[-∞, x] f(x) dx
+     = ∫[0, x] (2 * r) dr
+     = r^2 | [0, x]
+     = x^2
+
+So, our CDF becomes F(x) = x^2
+```
+
+So, we can now get to the Inverse Transform Sampling.
+
+```bash
+Let X be a random variable with a uniform distribution
+
+=> F(x) = P(X <= x)
+        = P(U <= F(x))
+        = P(F^-1(U) <= x)
+
+=> x = F^-1(U)
+
+In our case, F^-1(x) = √(x)
+```
+
+So, we need to do the following modification:
+
+```python showLineNumbers {3} /-/ /+/
+...
+- r = random.uniform(0, 1)
++ r = math.sqrt(random.uniform(0, 1))
+...
+```
+
+![inverse_tansform_sampling.gif](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/inverse_tansform_sampling.gif?raw=true)
+
+And there we go, we have our uniformly distributed random points in the circle. 😎
+
+## Infinite Triangles
+
+Now, let's do something interesting. Open up your mind for some visualization.
+Would it be wrong to say that circle is made up of infinitely many small triangles? No, right?
+On top of that, the triangles are isosceles triangles (since 2 sides are equal i.e. radius of the circle).
+
+This would act as a base for our next approach. What we need to do is to generate random points in an isosceles triangle.
+How do we do that? 🤔 If we look at a Rhombus, isn't it a skewed square which can be broken down into 2 isosceles triangles?
+If it is similar to a square, we can use our previous approach of choosing 2 random points to generate a point here.
+
+There is one thing we need to take care of. There are 2 triangles, one of which is in the bounds of the circle & the other one is lying just in the mirrored opposite direction.
+So, while generating the points, if the point get out of the bounds, we can simply take the mirror image of the point with respect to the circle.
+
+### The Algorithm
+
+```python showLineNumbers {8-10}
+def infinite_triangles:
+    while (your_condition_here):
+        a = random.uniform(-1, 1)
+        b = random.uniform(-1, 1)
+        theta = random.uniform(0, 2 * math.pi)
+
+        r = a + b
+        if r > 1:
+            r = 2 - r   # Mirror Image of the point
+
+        x = r * math.cos(theta)
+        y = r * math.sin(theta)
+        return (x, y)
+```
+
+The function generates 2 random points `a` & `b` in the range `[-1, 1]` & `θ` in the range `[0, 2π]`.
+It then checks if the point lies within the bounds of the circle or not. If not, it takes the mirror image of the point.
+Everything after that is the same as `Polar Coordinates`.
+
+### What did I just do?
+
+Why `r = a + b {:python}`?
+It's because of probability distribution. I could have taken `r = a * 2 {:python}` as well. But that would have generated an uniform distribution of points.
+
+> To understand this better, let's consider the example of die:
+> Rolling a die and mutiplying the outcome by 2 would give 2, 4, 6, 8, 10, 12 with equal probability.
+> But, rolling 2 dice (or a die twice) and adding the outcomes would give 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 with different probabilities.
+> And the probability distribution is fascinating too.
+
+![die_probability_distribution.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/die_prob_dist.png?raw=true)
+
+How to prove that the points generated are uniformly distributed in the circle?
+This can be done by using `Irwin Hall Distribution`.
+
+> The Irwin-Hall distribution is the distribution of the sum of n independent random variables, each uniformly distributed on the interval [0, 1].
+
+[Read More Here](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution)
+
+Once again, we need to get the PDF & CDF for this distribution.
+Well, I'm not going to type all that formula down. Here is a snapshot of the formulae:
+
+![probability_distribution.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/irwin_hall_distribution.png?raw=true)
+
+Pluggin in the values, we get the same PDF & CDF as the previous case. So, the points generated are uniformly distributed in the circle.
+
+![infinite_triangle.gif](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/main/uniform-random-points/infinite_triangle.gif?raw=true)
+
+Voilla, we have our uniformly distributed random points in the circle in yet another method. 😎
+
+## More Interesting Methods
+
+There are more interesting methods to generate uniformly distributed random points in a circle.
+Even if you take the above example & tweak the selection of `a` & `b` a bit, you can come up with a new method.
+
+```python
+...
+r = max(a, b)    # This also generates uniformly distributed random points in the circle
+...
+```
+
+> Who would have thought that generating random points in a circle would be so intriguing & fun.
+> I hope you enjoyed reading this as much as I enjoyed reading & writing about it.
+
+## For Some Other Night
+
+> Yeah about the Task Management Application in C, I got busy with some other stuffs & couldn't get myself ready to start it. I'll try to start it as soon as possible. I don't know what would be up for the next sleepless nights, keep guessing the topics 💁.

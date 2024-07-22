@@ -2,7 +2,7 @@
 title: Quake III Algorithm Explained
 description: A verbose explanation of the Quake III algorithm for Inverse Square Root calculation.
 date: 2024-07-09
-tags: ["algorithm", "explained"]
+tags: ["algorithm", "explained", "offtopic"]
 published: true
 ---
 
@@ -26,7 +26,7 @@ float inverse_sqrt(float x) {
 }
 ```
 
-But, this is slow. The `sqrt` function is slow. It is a complex function that involves a lot of calculations under the hood. 
+But, this is slow. The `sqrt` function is slow. It is a complex function that involves a lot of calculations under the hood.
 
 Now, coming back the question of why we need a faster algorithm.
 In `Game Development`, we need to normalize the vectors while dealing with physics stuffs such as lighting, shadows, etc.
@@ -39,7 +39,7 @@ z = z / sqrt(x*x + y*y + z*z);
 ```
 
 Here we have to calculate the square root as well as perform a division operation 😱. Imagine a game, running at a said frames per second,
-with each frame having numerous surfaces for which we need to calculate the normal vector. We can't simply go with the naive approach of calculating it, right? 
+with each frame having numerous surfaces for which we need to calculate the normal vector. We can't simply go with the naive approach of calculating it, right?
 
 > Now, I'll be honest with you with one thing. This algorithm gets an close approximation of the inverse square root, not the exact value. But since it is fast, we overlook the said 1% error it makes.
 
@@ -53,7 +53,7 @@ float Q_rsqrt(float number)
     long i;
     float x2, y;
     const float threehalfs = 1.5F;
-    
+
     x2 = number * 0.5F;
     y  = number;
     i  = * ( long * ) &y;                       // evil floating point bit level hacking
@@ -91,10 +91,10 @@ Before we actually start to read & understand the code, we need to know how are 
 No need to say that numbers are stored in bits 😅.
 We are given 16/32/64-bits to work with. If we put a decimal number in the middle, then how do we store a decimal number, right?
 It will work but just look at the number of bits we are wasting. In case of 32-bits, we can store numbers in range `[ 0, 2^32 ] {:bash}`
-& if we account for negative numbers (adding a singed-bit in the front) then we can store numbers in range `[ -2^31, 2^31 ] {:bash}`. 
+& if we account for negative numbers (adding a singed-bit in the front) then we can store numbers in range `[ -2^31, 2^31 ] {:bash}`.
 
 So, smart people came up with a way to store decimal numbers in a more efficient way. They took the idea similar to scientific notation
-i.e. `16.25 = 1 * 1.625 * 10^1 {:bash}` & `-16.25 = -1 * 1.625 * 10^1 {:bash}`.  
+i.e. `16.25 = 1 * 1.625 * 10^1 {:bash}` & `-16.25 = -1 * 1.625 * 10^1 {:bash}`.
 
 So, what do we need?
     - A sign bit to store the sign of the number.
@@ -110,7 +110,7 @@ The number of bits are reserved for each of these fields:
 
 For 32-bit number, we have exponent = 8 bits, but we have to include negative exponents as well.
 So, instead of the desired range of `[ 0, 2^8 ] {:bash}`, we have `[ -2^7, 2^7 ] {:bash}`.
-Hence, the standard uses a `bias exponent {:bash}` by simply adding `127` to the exponent value 
+Hence, the standard uses a `bias exponent {:bash}` by simply adding `127` to the exponent value
 i.e. to represent `2^0 {:bash}`, we store `127 {:bash}` in the exponent field.
 
 For the remaining 23 bits, we notice an interesting thing that can only happen in binary.
@@ -153,7 +153,7 @@ Let's take the `logarithm (base 2) {:bash}` of the expression:
 We know another interesting fact that `log2(1 + x) ≈ x {:bash}` for small values of `x {:bash}`. Here is the [proof](https://math.stackexchange.com/questions/1111041/showing-y%E2%89%88x-for-small-x-if-y-logx1).
 
 ```bash
-=> log2(number) ≈ M / 2^23 + μ + E - 127 # μ is the error correction 
+=> log2(number) ≈ M / 2^23 + μ + E - 127 # μ is the error correction
 ```
 
 After some rearrangement, we get:
@@ -184,7 +184,7 @@ This will make the compiler think that the address we are pointing to is that of
 
 ```c showLineNumbers title="quakeIII.c" {4,6}
 float Q_rsqrt(float number)
-{   
+{
     ...
     i  = * ( long * ) &y;                       // evil floating point bit level hacking
     i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
@@ -206,7 +206,7 @@ Bit manipulations are cool. We can multiple, divide & even change exponents by s
 
 ```c showLineNumbers title="quakeIII.c" {4}
 float Q_rsqrt(float number)
-{   
+{
     ...
     i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
     ...
