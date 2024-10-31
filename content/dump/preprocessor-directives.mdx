@@ -1,0 +1,140 @@
+---
+title: Preprocessor Directives
+description: This is a brief explanation of preprocessor directives in C/C++.
+date: 2024-10-29
+tags: ["explained", "offtopic", "c/cpp"]
+published: true
+---
+
+Long time no see. Yeah, I know, the procrasination got the better of me. But heyyyy!!! Here I am, back with another dump.
+
+So, coming back to the main topic, preprocessor directives. Tbh, this is not a new topic to me. I have been using them for quite some time now. But GOD, I didn't know the depth of it. While working on a project recently, I came across something that forced me to revisit the topic. And here I am, sharing my knowledge with you.
+
+All the references are taken from [here](https://cplusplus.com/doc/tutorial/preprocessor/) & [here](https://learn.microsoft.com/en-us/cpp/preprocessor/preprocessor-directives?view=msvc-170).
+
+## What are Preprocessor Directives?
+
+Preprocessor directives are lines included in the code of programs with the intention to help the compiler process the code before actual compilation. In simple words, they are commands that are executed before the actual compilation begins, basically telling the compiler to perform certain tasks.
+They are preceded by a hash symbol (#).
+
+The preprocessor directives are used for various purposes like defining constants, including header files, conditional compilation, etc, all of which are discussed in detail below.
+
+## Types of Preprocessor Directives
+
+There are several types of preprocessor directives in C/C++. Some of the most commonly used ones are:
+
+1. **Define Directive**
+2. **Include Directive**
+3. **ifdef, ifndef, else, endif Directives**
+4. **Error Directive**
+5. **Pragma Directive**
+
+Let's discuss each of them in detail.
+
+### #Define Directive
+
+The `#define` directive is to create a macro. When the preprocessor encounters this directive, it replaces all the occurrences of the macro name with the value specified in the directive.
+
+**Syntax :** `#define <macro_name> <value>`
+
+```c title="#define_example.c" showLineNumbers
+#define PI 3.14159
+#define MAX 100
+#define MESSAGE "Hello, World!"
+#define SUM(a, b) (a + b)
+#define PRODUCT(a, b) (a * b)
+#define MANHATTAN_DISTANCE(x1, y1, x2, y2) (abs(x1 - x2) + abs(y1 - y2))
+```
+
+<Callout type = "success">
+It is a good practice to use `#undef` directive before defining a macro to avoid any conflicts.
+</Callout>
+
+### #Include Directive
+
+The `#include` directive is used to include the contents of a file at the specified location in the program. It is used to include header files in the program.
+
+<Callout type = "success">
+It is good practice to add macros and constants in header files and include them in the main program using the `#include` directive.
+</Callout>
+
+**Syntax :** `#include <filename>`
+
+```c title="#include_example.c" showLineNumbers
+#include <stdio.h>
+#include <math.h>
+#include "myheader.h"
+```
+
+<Callout type = "danger">
+You can change the paths in which the compiler will search for the header files using the `-I` flag or the `INCLUDE` environment variable.
+</Callout>
+
+### #Ifdef, #Ifndef, #Else, #Endif Directives
+
+These directives are used for conditional compilation i.e., include or exclude certain parts of the code based on the condition.
+
+```c title="#ifdef_endif_example.c" showLineNumbers
+#ifdef TABLE_SIZE
+int table[TABLE_SIZE]   // Ensures that there is no compilation error if TABLE_SIZE is not defined
+#endif
+```
+
+```c title="#ifndef_endif_example.c" showLineNumbers
+#ifndef TABLE_SIZE
+#define TABLE_SIZE 100  // Defines TABLE_SIZE if it is not already defined
+#endif
+int table[TABLE_SIZE]
+```
+
+```c title="#if_else_elif_endif_example.c" showLineNumbers
+// A chain of #if, #else, #elif, #endif directives used to redefine TABLE_SIZE based on its current value
+
+#if TABLE_SIZE > 100
+#undef TABLE_SIZE
+#define TABLE_SIZE 50
+
+#elif TABLE_SIZE < 50
+#undef TABLE_SIZE
+#define TABLE_SIZE 75
+
+#else
+#undef TABLE_SIZE
+#define TABLE_SIZE 100
+#endif
+
+int table[TABLE_SIZE]
+```
+
+### #Error Directive
+
+The `#error` directive is used to generate a compilation error with the specified error message.
+
+**Syntax :** `#error <message>`
+
+```c title="#error_example.c" showLineNumbers
+#ifndef TABLE_SIZE
+#error "TABLE_SIZE is not defined"
+#endif
+```
+
+### #Pragma Directive
+
+This directive is used to specify implementation-specific directives to the compiler i.e., turn on or off certain features of the compiler.
+
+**Syntax :** `#pragma <directive>`
+
+```c title="#pragma_example.c" showLineNumbers
+#pragma pack(push, 1)   // Aligns the structure members on 1-byte boundary
+
+#pragma once            // Ensures that the header file is included only once
+```
+
+<Callout type="danger">
+The use of `#pragma` directive is discouraged as it is compiler-specific and may not work with all compilers.
+</Callout>
+
+## For Some Other Night
+
+
+> Again, I'm sorry for the long gap. But who I'm feeling sorry to? 😅 Tbh it's not that I'm not working on anything; I'm just not able to write about it. Anyway enough of this rant. Coming up something interesting soon, ever heard of Bigrams? Stay tuned.
