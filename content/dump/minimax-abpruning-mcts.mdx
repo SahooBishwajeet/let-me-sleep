@@ -1,0 +1,319 @@
+---
+title: Minimax, Alpha-Beta Pruning & MCTS
+description: A detailed explanation of Minimax, Alpha-Beta Pruning & Monte Carlo Tree Search
+date: 2025-03-31
+tags: ["algorithm", "explained", "offtopic"]
+published: true
+---
+
+Read More : [Minimax](https://en.wikipedia.org/wiki/Minimax), [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning), [Monte Carlo Tree Search](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search)
+
+References :
+
+1. [MIT OpenCourseWare - Games, Minimax, and Alpha-Beta](https://www.youtube.com/watch?v=STjW3eH0Cik)
+2. [Sebastian Lague - Minimax & Alpha-Beta Pruning](https://www.youtube.com/watch?v=l-hh51ncgDI)
+2. [John Levine - MCTS](https://www.youtube.com/watch?v=UXW2yZndl7U)
+2. [Minimax and Monte Carlo Tree Search](https://muens.io/minimax-and-mcts/)
+
+Ever played a game of tic-tac-toe? Or chess? Or any other 2-player game? You might have always thought if there exists any strategy/algorithmic approach which would guarantee a win for you. Well if not winning, atleast a draw.
+
+And the answer is YES, there are certain algorithms which can be used to get the best possible outcome in games like these.
+Today, we'd be discussing a family of such algorithms which are based on tree search.
+
+## The Strategies
+
+What would be an optimal strategy at any time? There are 2 ways to play :
+
+1. Aggressive :
+    - Play a move which would result in you winning
+    - Play a move which would set up a situation which would result in you winning in the future
+
+2. Defensive :
+    - Play a move which would prevent your opponent from winning
+    - Play a move which would set up a situation which would prevent your opponent setting up a future win situation
+
+Now the strategy is simple :
+
+<Flowchart>
+  <FlowchartStep type="default">
+    Look at your current state
+  </FlowchartStep>
+
+  <FlowchartStep type="default">
+    Find all possible moves, and their possible moves, and so on...
+  </FlowchartStep>
+
+  <FlowchartStep type="default">
+    Run through all the simulations, pretending to play the game on behalf of both players
+  </FlowchartStep>
+
+  <FlowchartStep type="secondary">
+    This would build up a tree of all possible game situations
+  </FlowchartStep>
+
+  <FlowchartStep type="accent">
+    Now pick the move which would lead to the best possible outcome for you
+  </FlowchartStep>
+</Flowchart>
+
+A simplified version of Tic-Tac-Toe game tree is shown below:
+
+![tic-tac-toe.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/tic-tac-toe.png?raw=true)
+
+## Behold The Minimax Algorithm
+
+<Callout type="warning">
+
+Some assumptions and simplifications are made here :
+    - We are playing a game of chess
+    - Even though at each state we have multiple possible moves, we will consider there are only 2 possible moves
+    -  For each state, we will evaluate the outcome/value by assigning a score to it
+    - Score = ```Number of Black pieces - Number of White pieces```
+
+</Callout>
+
+Let's say we are playing white and now it's our turn to play a move. Starting from here, we (white) have 2 choices to take, which would lead to 2 possible states where our opponent (black) would have to decide a move. Again we have 2 choices, and this would continue until we reach a terminal state (a state where the game ends).
+
+The tree would look something like this :
+
+![tree-init.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/tree-init.png?raw=true)
+
+Now that we have reached the terminal states, we can evaluate the score of each state. Let's say we have the following scores for the terminal states :
+
+![tree-terminal-values.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/tree-terminal-values.png?raw=true)
+
+Since our goal is to maximise our score, we would pick the maximum score from the terminal states. So, normally we'd go for the rightmost state with the score `11`, but there is a catch.
+
+### The Catch
+
+While we want to maximise our score, our opponent (black) is also trying to minimise it. So, we can't simply pick the maximum score from the terminal states. We need to consider the possible moves of our opponent as well, hence perform a traversal of the tree.
+
+The scores of all the states would look something like this :
+
+![tree-values.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/tree-values.png?raw=true)
+
+After this we get the best possible outcome as `4` and we can choose the decisions that would lead to this outcome.
+
+### Algorithm
+
+```python showLineNumbers
+def minimax(state, maxDepth, isMaximizer):
+    if maxDepth == 0 or state.isTerminal():
+        # Terminal state reached, return the evaluation of the state
+        return evaluation_function(state)
+
+    # Maximizer Player
+    if isMaximizer:
+        value = -math.inf
+        for move in state.possibleMoves():
+            evaluation = minimax(move, maxDepth - 1, False)
+            min = min(value, evaluation)
+        return value
+
+    # Minimizer Player
+    value = math.inf
+    for move in state.possibleMoves():
+        evaluation = minimax(move, maxDepth - 1, True)
+        max = max(value, evaluation)
+    return value
+```
+
+Check the complete animation below :
+<video controls>
+  <source src="https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/Minimax.mp4?raw=true" type="video/mp4" />
+</video>
+
+## Reducing The Search Space : Alpha-Beta Pruning
+
+There is one big problem with Minimax algorithm : When the tree becomes huge, it takes a lot of time to evaluate all the states and the entire process is computationally infeasible to perform.
+
+Let's understand this with an example :
+
+```python /Branching factor = 30/ /Depth = 80/
+We have an average of 30 possible choices in a game of chess (Branching factor = 30)
+And it takes around 80 consecutive moves to reach a terminal state (Depth = 80)
+
+So, the total number of nodes to be visited would be 30^80 = 1.4 * 10^118
+```
+
+So, we need some clever tricks to reduce the search space. One such trick is called Alpha-Beta Pruning.
+
+### The Trick
+
+Let's recall the main concept of Minimax : Player tries to get the best possible move at any given time. In our case, we (white) are trying to get the maximum score, while our opponent (black) is trying to get the minimum score.
+
+We can exploit this fact in a clever way. If we have traversed the tree, got some evaluation scores for one branch, and then we discover that the other branch would never be chosen because it would lead to a worse outcome, we can prune that branch and not evaluate it.
+
+```python
+Assuming an average of 10 prunes would reduce the branching factor to 20
+So, the total number of nodes to be visited would be 20^80 = 1.2 * 10^104
+
+This is a huge reduction in the search space
+```
+
+We can see the pruned branches in the tree below :
+
+![ab-prune.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/ab-prune.png?raw=true)
+
+### Algorithm
+
+```python showLineNumbers
+def alpha_beta(state, depth, alpha, beta, isMaximizer):
+    if depth == 0 or state.isTerminal():
+        return evaluation_function(state)
+
+    if isMaximizer:
+        value = -math.inf
+        for move in state.possibleMoves():
+            value = max(value, alpha_beta(move, depth - 1, alpha, beta, False))
+            alpha = max(alpha, value)
+            if beta <= alpha:
+                break
+        return value
+
+    else:
+        value = math.inf
+        for move in state.possibleMoves():
+            value = min(value, alpha_beta(move, depth - 1, alpha, beta, True))
+            beta = min(beta, value)
+            if beta <= alpha:
+                break
+        return value
+```
+
+Check the complete animation below :
+<video controls>
+  <source src="https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/AlphaBetaPruning.mp4?raw=true" type="video/mp4" />
+</video>
+
+
+## A Pinch Of Randomization
+
+<Callout type="danger">
+    Even though Minimax and Alpha-Beta Pruning are great algorithms, there is one problem with them : Robustness and reasonable evaluation function.
+
+    - We had a simple evaluation function which was based on the number of pieces on the board. But in a real game a lot of other factors come into play. So, a lot of thought needs to be put into the evaluation function.
+    - Also it is possible to fool and exploit the evaluation metrics once the underlying internals are known.
+</Callout>
+
+To overcome this problem and find a universal evaluation function, we use our ever trusty friend : ```Randomization```.
+
+In MCTS, we build a tree and do computations on it to find the best possible path. But there is a slight difference in how we construct the tree. Similar to Minimax, we play some moves and determine the outcome. But we do not know the evaluation function. How can we get the scores then?
+
+Turns out there is a simple solution to this. We let both players play a few random games. Starting from that state if we (white) win 75% of the time, there must be something about this state which favours us.
+
+Further read : [Law Of Large Numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers)
+
+### Some Definitions
+
+1. _t_ : Total value of the node/state (Init = 0)
+2. _n_ : Number of times the node/state has been visited (Init = 0)
+3. _UCB_ : Upper Confidence Bound (Helps decide which node to explore next)
+
+```python
+UCB = x + C * sqrt(log(N) / n + ε)
+
+Where x = average value of the node
+      C = exploration constant (a hyperparameter)
+      N = number of times the parent node has been visited
+      n = number of times the current node has been visited
+      ε = small constant to avoid division by zero
+```
+
+> Note that UCB is also called UCT (Upper Confidence Tree) in some literature.
+
+### First Iteration
+
+1. We initialized the values to 0 (refer to the image below)
+
+![mcts-first.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/mcts-first.png?raw=true)
+
+2. Calculate the UCT for each node:
+
+    - Child1 = 0 + 1 * sqrt(log(0) / 0 + ε) = ∞
+    - Child2 = 0 + 1 * sqrt(log(0) / 0 + ε) = ∞
+
+3. Since both the nodes have the same UCT, we can pick any of them. Let's say we pick Child1.
+
+4. Now we do a ```RollOut``` of the node i.e. play a random game from this state.
+
+### Termination & Backpropagation - I
+
+1. Let's say exploring Child1 leads to a 30% win rate for us. So, we can have the value 30 propagated to the parent node.
+
+2. Now we can update the values (refer to the image below)
+
+![mcts-back-first.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/mcts-back-first.png?raw=true)
+
+### Second Iteration
+
+1. Now we can calculate the UCT for each node again:
+
+    - Child1 = 30 + 1 * sqrt(log(1) / 1 + ε) = 30.0
+    - Child2 = 0 + 1 * sqrt(log(1) / 0 + ε) = ∞
+
+2. Since we always pick the node with the highest UCT, we pick Child2 and perform a RollOut.
+
+### Termination & Backpropagation - II
+
+1. Let's say exploring Child2 leads to a 20% win rate for us. So, we can have the value 20 propagated to the parent node.
+
+2. Now we can update the values (refer to the image below)
+
+![mcts-back-second.png](https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/images/mcts-back-second.png?raw=true)
+
+### Third Iteration
+
+1. Now we can calculate the UCT for each node again:
+
+    - Child1 = 30 + 1 * sqrt(log(2) / 1) = 30.5486
+    - Child2 = 20 + 1 * sqrt(log(2) / 1) = 20.5486
+
+2. Since we always pick the node with the highest UCT, we pick Child1 and perform a RollOut on its children.
+
+3. Continue this process until we reach a termination state (defined by a limit on the number of iterations, time or depth).
+
+<Flowchart>
+    <FlowchartStep type="default">
+        Start at the root node and use the UCT formula to calculate the score for every child node
+    </FlowchartStep>
+
+    <FlowchartStep type="default">
+        Pick the child node for which you've computed the highest UCT score
+    </FlowchartStep>
+
+    <FlowchartStep type="default">
+        Check if the child has already been visited
+            - If not, do a rollout
+            - If yes, determine the potential next states from there
+            - Use the UCT formula to decide which child node to pick
+            - Do a rollout
+    </FlowchartStep>
+
+    <FlowchartStep type="default">
+        Propagate the result back through the tree until you reach the root node
+    </FlowchartStep>
+
+    <FlowchartStep type="accent">
+        Repeat the process until you reach a termination state (defined by a limit on the number of iterations, time or depth)
+    </FlowchartStep>
+</Flowchart>
+
+Check the complete animation below :
+<video controls>
+  <source src="https://github.com/SahooBishwajeet/let-me-sleep-assets/blob/96e29efca13e7631b4d5b1e4bf09c652b358aac8/minimax-abprune-mcts/MCTS.mp4?raw=true" type="video/mp4" />
+</video>
+
+### Some Points To Discuss
+
+One might argue that MCTS is computationally expensive as it plays a lot of random games to determine the best possible path. There are a lot of things we can do to improve the performance of MCTS :
+
+1. Control the ```Temperature (Constant)``` : Tradeoff between exploration and exploitation. A high temperature means more exploration, while a low temperature means more exploitation.
+
+2. Parallelization : MCTS can be parallelized to speed up the process. We can run multiple simulations in parallel and combine the results.
+
+The simplicity and elegance of MCTS makes it feasible to be used along with Deep Neural Networks to optimize performance of certain tasks.
+
+## For Some Other Night
+
+> Hey there! 👋... Long time no see. I was stuck with a lot of projects and academic stuff (once again procrastination hits hard). Well, I do not know what would be up next for another sleepless night, but surely it'd be interesting
