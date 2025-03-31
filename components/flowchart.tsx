@@ -52,7 +52,7 @@ export const Flowchart = ({ children }: FlowchartProps) => {
   const childrenArray = React.Children.toArray(children);
 
   const numberedChildren = childrenArray.map((child, index) => {
-    if (React.isValidElement(child)) {
+    if (React.isValidElement<FlowchartStepProps>(child)) {
       return React.cloneElement(child, {
         number: index + 1,
         isLast: index === childrenArray.length - 1,
