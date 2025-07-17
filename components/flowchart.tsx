@@ -19,7 +19,7 @@ export const FlowchartStep = ({
     <div className="flex flex-col items-center">
       <div
         className={cn(
-          "w-full max-w-md rounded-lg p-4 border shadow-sm relative",
+          "w-full rounded-lg p-4 border shadow-sm relative",
           {
             "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700": type === "default",
             "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800": type === "primary",
@@ -28,10 +28,10 @@ export const FlowchartStep = ({
           }
         )}
       >
-        <div className="absolute -left-3 -top-3 flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 dark:bg-slate-700 text-white font-medium">
+        <div className="absolute -left-3 -top-3 flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 dark:bg-slate-700 text-white font-medium">
           {number}
         </div>
-        <div className="ml-6">{children}</div>
+        <div className="text-center">{children}</div>
       </div>
 
       {!isLast && (
