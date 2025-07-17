@@ -1,8 +1,9 @@
-import { describe } from "node:test";
-import { defineConfig, defineCollection, s } from "velite";
-import rehypeSlug from "rehype-slug";
-import rehypePrettyCode from "rehype-pretty-code";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeKatex from "rehype-katex";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeSlug from "rehype-slug";
+import remarkMath from "remark-math";
+import { defineCollection, defineConfig, s } from "velite";
 
 const computedFields = <T extends { slug: string }>(data: T) => ({
   ...data,
@@ -49,7 +50,8 @@ export default defineConfig({
           },
         },
       ],
+      rehypeKatex,
     ],
-    remarkPlugins: [],
+    remarkPlugins: [remarkMath],
   },
 });
