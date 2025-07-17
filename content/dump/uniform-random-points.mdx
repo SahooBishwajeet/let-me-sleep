@@ -172,30 +172,27 @@ So, the efficiency of this method reduces a lot. Upto what extent you ask? Well,
 
 > Efficiency = Correct Points / Total Points
 
-```bash
 This can be related to the area of the circle & the square i.e.
 The probability of a point lying inside the circle = Area of Circle / Area of Square
 
-Area Of Circle = (π * r^2) = (π * 1^2) = π
-Area Of Square = (2 * r)^2 = (2 * 1)^2 = 4
-```
+Area Of Circle = $\pi r^2$ = $\pi \cdot 1^2$ = $\pi$
+
+Area Of Square = $(2r)^2$ = $(2 \cdot 1)^2$ = $4$
 
 > So, the efficiency of this method is π / 4 ≈ 0.785 ≈ 78.5%.
 
-```bash
 Pushing the boundaries of probability a bit, we can say that:
 
 1. Consecutive Failures:
-    Probability of "n" consecutive failures = (1 - π / 4)^n
+    Probability of "n" consecutive failures = $(1 - \frac{\pi}{4})^n$
     So, there is a 0.0021% chance of getting 4 consecutive failures, which is very very low.
 
 2. Average Attempts:
-    Average number of attempts to get a correct points = E(n) = 1 / P
-                                                       = 1 / (π / 4) = 4 / π ≈ 1.27
+    Average number of attempts to get a correct points = $E(n) = \frac{1}{P}$
+                                                       = $\frac{1}{\frac{\pi}{4}} = \frac{4}{\pi} \approx 1.27$
     So, on average, approximately every point generated will be correct.
 
-    # Yeah I know, it's a big round-off, but hey it's just an approximation.
-```
+Yeah I know, it's a big round-off, but hey it's just an approximation.
 
 ## Polar Coordinates
 
@@ -213,10 +210,7 @@ So, basically, we fix a circle of radius `r` & then move the point along the cir
 Since, we are guaranteed that the point lies within the circle, we can generate the points directly in the polar coordinates without any need of rejection.
 So, what do we do? We generate a random value for `r` in the range `[0, 1]` & `θ` in the range `[0, 2π]`, which can be converted back to cartesian coordinates using the formulae:
 
-```bash
-x = r * cos(θ)
-y = r * sin(θ)
-```
+$x = r \cos(\theta)$ and $y = r \sin(\theta)$
 
 ### The Algorithm
 
@@ -253,29 +247,28 @@ Well, we have something called `Probability Density Function (PDF)` which can he
 
 > A Probability Density Function (PDF) is a function that describes the likelihood of a random variable taking on a particular value.
 > It is used to specify the probability of the random variable falling within a particular range of values.
-> i.e. `f(x) = P(a <= X <= b) {:bash}`
+> i.e. $f(x) = P(a \leq X \leq b)$
 
 [Read More Here](https://en.wikipedia.org/wiki/Probability_density_function)
 
 Now, we have to find the PDF for this.
 
-```bash
-Since, circumference of the circle grows linearly with radius i.e. C = 2πr
+Since, circumference of the circle grows linearly with radius i.e. $C = 2\pi r$
+
 Number of points in the circle should grow linearly with radius as well.
 
-i.e. f(r) = M * r                                 ------- (1)
-& we know from definition, P(0 <= r <= 1) = 1     ------- (2)
+i.e. $f(r) = M \cdot r$                                 ------- (1)
+
+& we know from definition, $P(0 \leq r \leq 1) = 1$     ------- (2)
 
 From (1) & (2), we can find the value of M as:
-    => ∫[0, 1] f(r) dr = 1
-    => ∫[0, 1] (M * r) dr = 1
-    => M * (r^2 / 2) | [0, 1] = 1
-    => M * (1 / 2) = 1
-    => M = 2
+    $\Rightarrow \int_0^1 f(r) dr = 1$ \
+    $\Rightarrow \int_0^1 (M \cdot r) dr = 1$ \
+    $\Rightarrow M \cdot (\frac{r^2}{2}) \big|_0^1 = 1$ \
+    $\Rightarrow M \cdot (\frac{1}{2}) = 1$ \
+    $\Rightarrow M = 2$
 
-So, our PDF becomes f(r) = 2 * r
-i.e. We should generate points with a probability of 2 * r, instead of uniform probability.
-```
+So, our PDF becomes $f(r) = 2r$ i.e. We should generate points with a probability of $2r$, instead of uniform probability.
 
 Before we proceed, we need some mechanism to add to our previous uniform random number generator to generate points with a probability of `2 * r`.
 Here comes the `Inverse Transform Sampling` to the rescue.
@@ -288,34 +281,30 @@ Here comes the `Inverse Transform Sampling` to the rescue.
 CDF ??? What's that? 🤔
 
 > A Cumulative Distribution Function (CDF) is a function that describes the probability that a real-valued random variable X with a given probability distribution will be found at a value less than or equal to x.
-> i.e. `F(x) = P(X <= x) {:bash}`
+> i.e. $F(x) = P(X \leq x)$
 
 [Read More Here](https://en.wikipedia.org/wiki/Cumulative_distribution_function)
 
 It's basically the integral of the PDF from `-∞` to `x`.
 
-```bash
-F(x) = ∫[-∞, x] f(x) dx
-     = ∫[0, x] (2 * r) dr
-     = r^2 | [0, x]
-     = x^2
+$F(x) = \int_{-\infty}^{x} f(x) dx$ \
+    $= \int_{0}^{x} (2r) dr$ \
+    $= r^2 |_{0}^{x}$ \
+    $= x^2$
 
-So, our CDF becomes F(x) = x^2
-```
+So, our CDF becomes $F(x) = x^2$
 
 So, we can now get to the Inverse Transform Sampling.
 
-```bash
-Let X be a random variable with a uniform distribution
+$\text{Let X be a random variable with a uniform distribution}$
 
-=> F(x) = P(X <= x)
-        = P(U <= F(x))
-        = P(F^-1(U) <= x)
+$\Rightarrow F(x) = P(X \leq x)$ \
+$\qquad \quad = P(U \leq F(x))$ \
+$\qquad \quad = P(F^{-1}(U) \leq x)$
 
-=> x = F^-1(U)
+$\Rightarrow x = F^{-1}(U)$
 
-In our case, F^-1(x) = √(x)
-```
+$\text{In our case, } F^{-1}(x) = \sqrt{x}$
 
 So, we need to do the following modification:
 

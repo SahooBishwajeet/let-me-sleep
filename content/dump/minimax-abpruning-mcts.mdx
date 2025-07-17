@@ -132,11 +132,9 @@ Let's understand this with an example :
 ```python /Branching factor = 30/ /Depth = 80/
 We have an average of 30 possible choices in a game of chess (Branching factor = 30)
 And it takes around 80 consecutive moves to reach a terminal state (Depth = 80)
-
-So, the total number of nodes to be visited would be 30^80 = 1.4 * 10^118
 ```
-
-So, we need some clever tricks to reduce the search space. One such trick is called Alpha-Beta Pruning.
+So, the total number of nodes to be visited would be
+$30^{80} = 1.4 \times 10^{118}$ and hence we need some clever tricks to reduce the search space. One such trick is called Alpha-Beta Pruning.
 
 ### The Trick
 
@@ -144,12 +142,10 @@ Let's recall the main concept of Minimax : Player tries to get the best possible
 
 We can exploit this fact in a clever way. If we have traversed the tree, got some evaluation scores for one branch, and then we discover that the other branch would never be chosen because it would lead to a worse outcome, we can prune that branch and not evaluate it.
 
-```python
 Assuming an average of 10 prunes would reduce the branching factor to 20
-So, the total number of nodes to be visited would be 20^80 = 1.2 * 10^104
+So, the total number of nodes to be visited would be $20^{80} = 1.2 \times 10^{104}$
 
-This is a huge reduction in the search space
-```
+This is a huge reduction in the search space.
 
 We can see the pruned branches in the tree below :
 
@@ -210,15 +206,15 @@ Further read : [Law Of Large Numbers](https://en.wikipedia.org/wiki/Law_of_large
 2. _n_ : Number of times the node/state has been visited (Init = 0)
 3. _UCB_ : Upper Confidence Bound (Helps decide which node to explore next)
 
-```python
-UCB = x + C * sqrt(log(N) / n + ε)
+$$ \text{UCB} = \bar{x} + C \sqrt{\frac{\ln(N)}{n + \varepsilon}} $$
 
-Where x = average value of the node
-      C = exploration constant (a hyperparameter)
-      N = number of times the parent node has been visited
-      n = number of times the current node has been visited
-      ε = small constant to avoid division by zero
-```
+Where:
+- $\bar{x}$ = average value of the node
+- $C$ = exploration constant (a hyperparameter)
+- $N$ = number of times the parent node has been visited
+- $n$ = number of times the current node has been visited
+- $\varepsilon$ = small constant to avoid division by zero
+
 
 > Note that UCB is also called UCT (Upper Confidence Tree) in some literature.
 
@@ -230,8 +226,8 @@ Where x = average value of the node
 
 2. Calculate the UCT for each node:
 
-    - Child1 = 0 + 1 * sqrt(log(0) / 0 + ε) = ∞
-    - Child2 = 0 + 1 * sqrt(log(0) / 0 + ε) = ∞
+    - Child1 = $0 + 1 \times \sqrt{\frac{\ln(0)}{0 + \varepsilon}} = \infty$
+    - Child2 = $0 + 1 \times \sqrt{\frac{\ln(0)}{0 + \varepsilon}} = \infty$
 
 3. Since both the nodes have the same UCT, we can pick any of them. Let's say we pick Child1.
 
@@ -249,8 +245,8 @@ Where x = average value of the node
 
 1. Now we can calculate the UCT for each node again:
 
-    - Child1 = 30 + 1 * sqrt(log(1) / 1 + ε) = 30.0
-    - Child2 = 0 + 1 * sqrt(log(1) / 0 + ε) = ∞
+    - Child1 = $30 + 1 \times \sqrt{\frac{\ln(1)}{1 + \varepsilon}} = 30.0$
+    - Child2 = $0 + 1 \times \sqrt{\frac{\ln(1)}{0 + \varepsilon}} = \infty$
 
 2. Since we always pick the node with the highest UCT, we pick Child2 and perform a RollOut.
 
@@ -266,8 +262,8 @@ Where x = average value of the node
 
 1. Now we can calculate the UCT for each node again:
 
-    - Child1 = 30 + 1 * sqrt(log(2) / 1) = 30.5486
-    - Child2 = 20 + 1 * sqrt(log(2) / 1) = 20.5486
+    - Child1 = $30 + 1 \times \sqrt{\frac{\ln(2)}{1}} = 30.5486$
+    - Child2 = $20 + 1 \times \sqrt{\frac{\ln(2)}{1}} = 20.5486$
 
 2. Since we always pick the node with the highest UCT, we pick Child1 and perform a RollOut on its children.
 

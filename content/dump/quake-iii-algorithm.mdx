@@ -32,11 +32,7 @@ Now, coming back the question of why we need a faster algorithm.
 In `Game Development`, we need to normalize the vectors while dealing with physics stuffs such as lighting, shadows, etc.
 To normalize a vector, we use this formula:
 
-```c showLineNumbers
-x = x / sqrt(x*x + y*y + z*z);
-y = y / sqrt(x*x + y*y + z*z);
-z = z / sqrt(x*x + y*y + z*z);
-```
+$x = \frac{x}{\sqrt{x^2 + y^2 + z^2}}$ , $y = \frac{y}{\sqrt{x^2 + y^2 + z^2}}$ , $z = \frac{z}{\sqrt{x^2 + y^2 + z^2}}$
 
 Here we have to calculate the square root as well as perform a division operation 😱. Imagine a game, running at a said frames per second,
 with each frame having numerous surfaces for which we need to calculate the normal vector. We can't simply go with the naive approach of calculating it, right?
@@ -94,7 +90,7 @@ It will work but just look at the number of bits we are wasting. In case of 32-b
 & if we account for negative numbers (adding a singed-bit in the front) then we can store numbers in range `[ -2^31, 2^31 ] {:bash}`.
 
 So, smart people came up with a way to store decimal numbers in a more efficient way. They took the idea similar to scientific notation
-i.e. `16.25 = 1 * 1.625 * 10^1 {:bash}` & `-16.25 = -1 * 1.625 * 10^1 {:bash}`.
+i.e. $16.25 = 1 \times 1.625 \times 10^1$ & $-16.25 = -1 \times 1.625 \times 10^1$.
 
 So, what do we need?
     - A sign bit to store the sign of the number.
@@ -139,28 +135,20 @@ But we won't be encountering them in our use-case.
 Let's do something that will come in handy later on.
 Now, let's see the representation of a number in IEEE 754 format:
 
-```bash
-number = (1 + M / 2^23) * 2^(E - 127)
-```
+number = $( 1 + \frac{M}{2^{23}} ) \times 2^{E - 127}$
 
 Let's take the `logarithm (base 2) {:bash}` of the expression:
 
-```bash
-=> log2(number) = log2((1 + M / 2^23) + 2^(E - 127))
-                = log2(1 + M / 2^23) + E - 127
-```
+$\log_2(number) = \log_2((1 + \frac{M}{2^{23}}) \times 2^{E - 127})$ \
+$= \log_2(1 + \frac{M}{2^{23}}) + E - 127$
 
 We know another interesting fact that `log2(1 + x) ≈ x {:bash}` for small values of `x {:bash}`. Here is the [proof](https://math.stackexchange.com/questions/1111041/showing-y%E2%89%88x-for-small-x-if-y-logx1).
 
-```bash
-=> log2(number) ≈ M / 2^23 + μ + E - 127 # μ is the error correction
-```
+$\log_2(number) \approx \frac{M}{2^{23}} + \mu + E - 127$ , where $\mu$ is the error correction
 
 After some rearrangement, we get:
 
-```bash
-=> log2(number) ≈ 1 / 2^23 * (M + E * 2^23) + μ - 127
-```
+$\log_2(number) \approx \frac{1}{2^{23}} (M + E \cdot 2^{23}) + \mu - 127$
 
 Voilla! We can see the bit representation of the number in the above expression. And to calculate the logarithm, we just need to scale & shift the bits.
 So, essentially the IEEE 754 format is somewhat equal to the logarithm of the number. NICE 😎!!!
@@ -214,33 +202,31 @@ float Q_rsqrt(float number)
 }
 ```
 
-For a number `x^1 {:bash}`:
-    1. Doubling the exponent `x^2 {:bash}` : Squares the number
-    2. Halving the exponent `x^(1/2) {:bash}` : Gives the square root of the number
-    3. Negating the above `x^-(1/2) {:bash}` : Give the inverse square root of the number
+For a number $x^{1}$:
+    1. Doubling the exponent $x^{2}$ : Squares the number
+    2. Halving the exponent $x^{1/2}$ : Gives the square root of the number
+    3. Negating the above $x^{-1/2}$ : Give the inverse square root of the number
 
 Now, recall that a IEEE 754 format is more or less approximately equal to the logarithm of the number.
-So, instead of calculating `x^-(1/2) {:bash}`, we will find `log2(x^-(1/2)) {:bash}`
+So, instead of calculating $x^{-1/2}$, we will find $\log_2(x^{-1/2})$
 
-```bash
-Let Δ be the inverse square root of x
+Let $\Delta$ be the inverse square root of $x$
 
-=> log2(Δ) = log2(x^-(1/2))
-=> log2(Δ) = -(1/2) * log(x)
+$\implies \log_2(\Delta) = \log_2(x^{-1/2})$ \
+$\implies \log_2(\Delta) = -\frac{1}{2} \cdot \log(x)$
 
 Replacing with bit representation,
 
-=> 1 / 2^23 * (M(Δ) + E(Δ) * 2^23) + μ - 127 = -(1/2) * ( 1 / 2^23 * (M(x) + E(x) * 2^23) + μ - 127 )
+$\implies \frac{1}{2^{23}} (M(\Delta) + E(\Delta) \cdot 2^{23}) + \mu - 127 = -\frac{1}{2} \cdot (\frac{1}{2^{23}} (M(x) + E(x) \cdot 2^{23}) + \mu - 127)$
 
 After some calculations,
 
-=> M(Δ) + E(Δ) * 2^23 = 3/2 * 2^23 * (127 - μ) - 1/2 * (M(x) + E(x) * 2^23)
-=> M(Δ) + E(Δ) * 2^23 = 0x5f3759df - 1/2 * (M(x) + E(x) * 2^23)
+$\implies M(\Delta) + E(\Delta) \cdot 2^{23} = \frac{3}{2} \cdot 2^{23} \cdot (127 - \mu) - \frac{1}{2} \cdot (M(x) + E(x) \cdot 2^{23})$ \
+$\implies M(\Delta) + E(\Delta) \cdot 2^{23} = \text{0x5f3759df} - \frac{1}{2} \cdot (M(x) + E(x) \cdot 2^{23})$
 
 Instead of dividing by 2, we can bit shift it to the right by 1.
 
-=> Δ = 0x5f3759df - ( x >> 1 )
-```
+$\implies \Delta = \text{0x5f3759df} - (x \gg 1)$
 
 ### Newton Iteration
 
@@ -249,19 +235,16 @@ It does so by taking the tangent to the curve at the current approximation & fin
 
 So, we have the equation:
 
-```bash
-x' = x - f(x) / f'(x)
-```
+$x' = x - f(x) / f'(x)$
 
-For our case, we have the function `f(y) = 1/y^2 - x {:bash}`, since for `y = 0, f(y) = 1/√x {:bash}`.
-The derivative of the function is `f'(y) = -2 / y^3 {:bash}`.
+For our case, we have the function $f(y) = \frac{1}{y^2} - x$, since for $y = 0, f(y) = \frac{1}{\sqrt{x}}$.
 
-```bash
-=> y' = y - (1/y^2 - x) / (-2 / y^3)
-=> y' = y (3 - x * y^2) / 2
-```
+The derivative of the function is $f'(y) = -\frac{2}{y^3}$.
 
-So, `y' = y * (3/2 - (x/2 * y * y)) {:bash}` i.e. `y * (threehalfs - (x2 * y * y)) {:bash}`
+$y' = y - \frac{1/y^2 - x}{-2/y^3}$ \
+$\implies y' = y \frac{3 - xy^2}{2}$
+
+So, $y' = y \cdot (3/2 - (x/2 \cdot y \cdot y))$  i.e. `y * (threehalfs - (x2 * y * y)) {:bash}`
 
 ```c showLineNumbers title="quakeIII.c" {4-5}
 float Q_rsqrt(float number)
